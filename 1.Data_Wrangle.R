@@ -3,21 +3,42 @@ library(tidyverse)
 library(tidycensus)
 library(readxl)
 
-##--data import-----------------------------------------------------------------
+##--1a. CES data import-----------------------------------------------------------------
+
 ces_employees <- read_excel("Data/ces_employees.xlsx")
 ces_pctchange <- read_excel("Data/ces_pctchange.xlsx")
 
-abs_data <- read_csv("Data/abs_data.csv")
+# store both datasets in a list
+cesDataList <- list(ces_employees, ces_pctchange)
 
-##--CES data clean-----------------------------------------------------------------
+##--1b. CES data clean-----------------------------------------------------------------
+
 # define a cleaning function
-cleanData <- function(data) {
+ces_clean <- function(data, index) {
   data <- data[-c(1,2,3,4,5,6,7,8,9,10,11),] # removing empty rows in the data
   colnames(data) <- as.character(unlist(data[1, ])) # set column names based on first row values
   data <- data[-1,]
+  data <- data %>% 
+    gather(month, values, Jan:Dec) %>% 
+    mutate(values = as.numeric(values),
+           date = as.Date(paste(Year, month, "01", sep = "-"), format = "%Y-%b-%d")
+           ) %>% 
+    select(date, values)
+  # create a new variable with a different value depending on the index of the data frame
+  if (index == 1) {
+    data$Type <- "No. of employees (in thousands)"
+  } else if (index == 2) {
+    data$Type <- "12-Month Percentage change"
+  }
   return(data)
 }
 
+# apply the cleaning function to each dataset in the list
+cleanCESdata <- lapply(seq_along(cesDataList), function(i) ces_clean(cesDataList[[i]], i))
+ces_employees <- cleanCESdata[[1]]
+ces_pctchange <- cleanCESdata[[2]]
 
+##--2a. ABS data import-----------------------------------------------------------------
 
-
+abs_data <- read_csv("Data/abs_data.csv")
+abs_data <- abs_data[-1,]
