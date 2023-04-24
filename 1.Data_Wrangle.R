@@ -23,13 +23,16 @@ ces_clean <- function(data, index) {
     mutate(values = as.numeric(values),
            date = as.Date(paste(Year, month, "01", sep = "-"), format = "%Y-%b-%d")
            ) %>% 
-    select(date, values)
+    select(Year, date, values)
   # create a new variable with a different value depending on the index of the data frame
   if (index == 1) {
-    data$Type <- "No. of employees (in thousands)"
+    data$type <- "No. of employees (in thousands)"
   } else if (index == 2) {
-    data$Type <- "12-Month Percentage change"
+    data$type <- "12-Month Percentage change"
   }
+  # arranging by date 
+  data <- data %>% 
+    arrange(date)
   return(data)
 }
 
