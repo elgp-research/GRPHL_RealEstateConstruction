@@ -50,3 +50,6 @@ rsconnect/
 
 # .DS_Store files
 .DS_Store
+
+# Large IPUMS extract file
+Data/.dat.gz
