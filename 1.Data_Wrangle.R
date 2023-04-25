@@ -2,10 +2,9 @@
 library(tidyverse)
 library(tidycensus)
 library(readxl)
+library(ipumsr)
+library(survey)
 options(scipen=999)
-
-# Looking at the codebook 
-varlist19 <- load_variables(year = 2019, dataset = "acs5")
 
 ##--1a. CES data import-----------------------------------------------------------------
 
@@ -52,45 +51,335 @@ abs_data <- abs_data[-1,]
 
 ##--3a. IPUMS data----------------------------------------------------------------------
 
+# Reading the IPUMS metadata
+ddi <- read_ipums_ddi("Data/usa_00024.xml")
+ipums_view(ddi)
 
-##--4a. ACS data------------------------------------------------------------------------
+# The dat.gz is the dataset downloaded from the IPUMS website
+ipums_data <- ipumsr::read_ipums_micro(
+  ddi = "Data/usa_00024.xml",
+  data_file = "Data/usa_00024.dat.gz"
+)
 
-# Looking at the codebook 
-varlist21 <- load_variables(year = 2021, dataset = "acs1")
+##--3b. IPUMS data filters----------------------------------------------------------------------
 
-# Construction Workers variable list from ACS
+ipums_data <- ipums_data %>% 
+  filter(!is.na(MET2013)) # removing years that do not have Metropolitan areas defined 
+
+ipums_data <- ipums_data %>% 
+  mutate(
+    SEX = as_factor(SEX),
+    EDUC = as_factor(EDUC), 
+    
+    RACE = as_factor(RACE),
+    RACED = as_factor(RACED),
+    
+    HISPAN = as_factor(HISPAN),
+    HISPAND = as_factor(HISPAND), 
+       
+    EMPSTAT = as_factor(EMPSTAT),
+    CLASSWKR = as_factor(CLASSWKR),
+    IND = as_factor(IND),
+    OCC = as_factor(OCC),
+    
+    OCC = recode(OCC,
+                    `10` = "Chief executives and legislators",
+                    `20` = "General and operations managers",
+                    `51` = "Marketing managers",
+                    `52` = "Sales managers",
+                    `102` = "Facilities managers",
+                    `110` = "Computer and information systems managers",
+                    `120` = "Financial managers",
+                    `136` = "Human resources managers",
+                    `140` = "Industrial production managers",
+                    `150` = "Purchasing managers",
+                    `160` = "Transportation, storage, and distribution managers",
+                    `220` = "Construction managers",
+                    `230` = "Education and childcare administrators",
+                    `310` = "Food service managers",
+                    `335` = "Entertainment and recreation managers",
+                    `350` = "Medical and health services managers",
+                    `360` = "Natural sciences managers",
+                    `410` = "Property, real estate, and community association managers",
+                    `420` = "Social and community service managers",
+                    `425` = "Emergency management directors",
+                    `440` = "Other managers",
+                    `530` = "Purchasing agents, except wholesale, retail, and farm products",
+                    `540` = "Claims adjusters, appraisers, examiners, and investigators",
+                    `565` = "Compliance officers",
+                    `600` = "Cost estimators",
+                    `630` = "Human resources workers",
+                    `650` = "Training and development specialists",
+                    `700` = "Logisticians",
+                    `705` = "Project management specialists",
+                    `710` = "Management analysts",
+                    `726` = "Fundraisers",
+                    `735` = "Market research analysts and marketing specialists",
+                    `750` = "Business operations specialists, all other",
+                    `800` = "Accountants and auditors",
+                    `810` = "Property appraisers and assessors",
+                    `845` = "Financial and investment analysts",
+                    `850` = "Personal financial advisors",
+                    `860` = "Insurance underwriters",
+                    `930` = "Tax examiners and collectors, and revenue agents",
+                    `940` = "Tax preparers",
+                    
+                    `1006` = "Computer systems analysts",
+                    `1010` = "Computer programmers",
+                    `1021` = "Software developers",
+                    `1032` = "Web and digital interface designers",
+                    `1050` = "Computer support specialists",
+                    `1108` ="Computer occupations, all other",
+                    `1220` ="Operations research analysts",
+                    `1240` ="Other mathematical science occupations",
+                    `1320` ="Aerospace engineers",
+                    `1360` ="Civil engineers",
+                    `1420` = "Environmental engineers",
+                    `1430` = "Industrial engineers, including health and safety",
+                    `1530` = "Other engineers",
+                    `1610` = "Biological scientists",
+                    `1650` = "Other life scientists",
+                    `1720` = "Chemists and materials scientists",
+                    `1745` = "Environmental scientists and specialists, including health",
+                    `1760` = "Physical scientists, all other",
+                    `1860` = "Other social scientists",
+                    `1910` = "Biological technicians",
+                    `1920` = "Chemical technicians",
+                    `1970` = "Other life, physical, and social science technicians",
+                    `2001` = "Substance abuse and behavioral disorder counselors",
+                    `2002` = "Educational, guidance, and career counselors and advisors",
+                    `2004` = "Mental health counselors",
+                    `2014` = "Social workers, all other",
+                    `2015` = "Probation officers and correctional treatment specialists",
+                    `2016` = "Social and human service assistants",
+                    `2025` =  "Other community and social service specialists",
+                    `2040` = "Clergy",
+                    `2050` = "Directors, religious activities and education",
+                    `2060` = "Religious workers, all other",
+                    `2100` = "Lawyers, and judges, magistrates, and other judicial workers",
+                    `2145` = "Paralegals and legal assistants",
+                    `2170` = "Title examiners, abstractors, and searchers",
+                    `2180` = "Legal support workers, all other",
+                    `2205` = "Postsecondary teachers",
+                    `2300` = "Preschool and kindergarten teachers",
+                    `2310` = "Elementary and middle school teachers",
+                    `2320` = "Secondary school teachers",
+                    `2330` = "Special education teachers",
+                    `2350` = "Tutors",
+                    `2360` = "Other teachers and instructors",
+                    `2400` = "Archivists, curators, and museum technicians",
+                    `2545` = "Teaching assistants", 
+                    `2555` = "Other educational instruction and library workers", 
+                    `2600` = "Artists and related workers",
+                    `2634` = "Graphic designers",
+                    `2635` = "Interior designers",
+                    `2640` = "Other designers",
+                    `2710` = "Producers and directors",
+                    `2722` = "Coaches and scouts",
+                    `2740` = "Dancers and choreographers",
+                    `2752` = "Musicians and singers",
+                    `2810` = "News analysts, reporters, and journalists", 
+                    `2825` = "Public relations specialists",
+                    `2830` = "Editors",
+                    `2840` = "Technical writers",
+                    `2850` = "Writers and authors",
+                    `2861` = "Interpreters and translators",
+                    `2910` = "Photographers",
+                    `2920` = "Television, video, and film camera operators and editors",
+                    `3010` = "Dentists",
+                    `3050` = "Pharmacists",
+                    `3090` = "Physicians",
+                    `3100` = "Surgeons",
+                    `3110` = "Physician assistants", 
+                    `3140` = "Audiologists",
+                    `3150` = "Occupational therapists",
+                    `3160` = "Physical therapists",
+                    `3230` = "Speech-language pathologists",
+                    `3245` = "Other therapists",
+                    `3250` = "Veterinarians",
+                    `3255` = "Registered nurses",
+                    `3256` = "Nurse anesthetists",
+                    `3258` = "Nurse practitioners, and nurse midwives",
+                    `3300` = "Clinical laboratory technologists and technicians",
+                    `3322` = "Diagnostic medical sonographers",
+                    `3323` = "Radiologic technologists and technicians",
+                    `3421` = "Pharmacy technicians",
+                    `3500` = "Licensed practical and licensed vocational nurses", 
+                    `3515` = "Medical records specialists",
+                    `3550` = "Other healthcare practitioners and technical occupations",
+                    `3601` = "Home health aides",
+                    `3602` = "Personal care aides",
+                    `3603` = "Nursing assistants",
+                    `3620` = "Physical therapist assistants and aides",
+                    `3630` = "Massage therapists",
+                    `3640` = "Dental assistants",
+                    `3646` = "Medical transcriptionists",
+                    `3649` = "Phlebotomists",
+                    `3802` = "Correctional officers and jailers",
+                    `3870` = "Police officers",
+                    `3930` = "Security guards and gaming surveillance officers",
+                    `3960` = "Other protective service workers",
+                    `4000` = "Chefs and head cooks",
+                    `4010` = "First-line supervisors of food preparation and serving workers",
+                    `4020` = "Cooks",
+                    `4030` = "Food preparation workers",
+                    `4040` = "Bartenders",
+                    `4055` = "Fast food and counter workers",
+                    `4110` = "Waiters and waitresses",
+                    `4130` = "Dining room and cafeteria attendants and bartender helpers",
+                    `4140` = "Dishwashers",
+                    `4210` = "First-line supervisors of landscaping, lawn service, and groundskeeping workers",
+                    `4220` = "Janitors and building cleaners",
+                    `4230` = "Maids and housekeeping cleaners",
+                    `4255` = "Other grounds maintenance workers",
+                    `4350` = "Animal caretakers",
+                    `4435` = "Other entertainment attendants and related workers",
+                    `4521` = "Manicurists and pedicurists",
+                    `4540` = "Tour and travel guides",
+                    `4600` = "Childcare workers",
+                    `4621` = "Exercise trainers and group fitness instructors",
+                    `4622` = "Recreation workers",
+                    `4640` = "Residential advisors",
+                    `4655` = "Personal care and service workers, all other", 
+                    `4700` = "First-line supervisors of retail sales workers",
+                    `4710` = "First-line supervisors of non-retail sales workers",
+                    `4720` = "Cashiers",
+                    `4760` = "Retail salespersons",
+                    `4810` = "Insurance sales agents",
+                    `4820` = "Securities, commodities, and financial services sales agents", 
+                    `4850` = "Sales representatives, wholesale and manufacturing",
+                    `4920` = "Real estate brokers and sales agents",
+                    `4965` = "Sales and related workers, all other",
+                    `5000` = "First-line supervisors of office and administrative support workers",
+                    `5100` = "Bill and account collectors",
+                    `5120` = "Bookkeeping, accounting, and auditing clerks",
+                    `5220` = "Court, municipal, and license clerks",
+                    `5230` = "Credit authorizers, checkers, and clerks",
+                    `5240` = "Customer service representatives",
+                    `5300` = "Hotel, motel, and resort desk clerks", 
+                    `5320` = "Library assistants, clerical",
+                    `5400` = "Receptionists and information clerks",
+                    `5410` = "Reservation and transportation ticket agents and travel clerks",
+                    `5510` = "Couriers and messengers",
+                    `5730` = "Medical secretaries and administrative assistants", 
+                    `5740` = "Secretaries and administrative assistants, except legal, medical, and executive",
+                    `5810` = "Data entry keyers",
+                    `5820` = "Word processors and typists",
+                    `5860` = "Office clerks, general",
+                    `5920` = "Statistical assistants",
+                    `5940` = "Other office and administrative support workers",
+                    `6050` = "Other agricultural workers",
+                    `6230` = "Carpenters",
+                    `6260` = "Construction laborers",
+                    `6355` = "Electricians",
+                    `6800` = "Derrick, rotary drill, and service unit operators, and roustabouts, oil, gas, and mining",
+                    `7200` = "Automotive service technicians and mechanics",
+                    `7315` = "Heating, air conditioning, and refrigeration mechanics and installers",
+                    `7330` = "Industrial and refractory machinery mechanics",
+                    `7340` = "Maintenance and repair workers, general",
+                    `7540` = "Locksmiths and safe repairers",
+                    `7610` = "Helpers--installation, maintenance, and repair workers",
+                    `7750` = "Other assemblers and fabricators",
+                    `7800` = "Bakers",
+                    `7810` = "Butchers and other meat, poultry, and fish processing workers",
+                    `7840` = "Food batchmakers",
+                    `8030` = "Machinists",
+                    `8140` = "Welding, soldering, and brazing workers",
+                    `8255` = "Printing press operators",
+                    `8300` = "Laundry and dry-cleaning workers",
+                    `8350` = "Tailors, dressmakers, and sewers",
+                    `8610` = "Stationary engineers and boiler operators",
+                    `8740` = "Inspectors, testers, sorters, samplers, and weighers",
+                    `8760` = "Dental and ophthalmic laboratory technicians and medical appliance technicians",
+                    `8800` = "Packaging and filling machine operators and tenders",
+                    `9050` = "Flight attendants",
+                    `9130` = "Driver/sales workers and truck drivers",
+                    `9142` = "Taxi drivers",
+                    `9300` = "Sailors and marine oilers, and ship engineers",
+                    `9310` = "Ship and boat captains and operators", 
+                    `9415` = "Passenger attendants",
+                    `9610` = "Cleaners of vehicles and equipment", 
+                    `9620` = "Laborers and freight, stock, and material movers, hand",
+                    `9640` = "Packers and packagers, hand",
+                    `9645` = "Stockers and order fillers",
+                    `9720` = "Refuse and recyclable material collectors",
+                    `9830` = "Military, rank not specified"
+       ))
+
+
+ipums_philly <- ipums_data %>% 
+  filter(MET2013 == 37980) # filtering for just Philadelphia metro
+
+
+##--3c. Survey weights--------------------------------------------------------------------------
+dtaDesign     <- svydesign(id      = ~CLUSTER,
+                           strata  = ~STRATA,
+                           weights = ~PERWT,
+                           nest    = TRUE,
+                           data    = ipums_philly)
+
+##--3d. Cross tabulations--------------------------------------------------------------------------
+occ_table <- svytable(~YEAR+RACE+IND+CLASSWKR, design = dtaDesign)
+occ_data <- as.data.frame(occ_table) 
+
+ipums_construction <- occ_data %>% 
+  filter(IND == 770 | IND == 3080) # filtering for construction industry 
+
+
+##--4a. ACS data: Setting variable and year list for ACS-----------------------------------------
 varlist <- c(total_employees = "B24060_031", # Total Construction Workers
-  
-             total_male = B24010_117, # Male 
-             total_female = B24010_268, # Female 
              
-             fulltime_male = B24020_117, # Full time Male
-             fulltime_female = B24020_268, # Full time Female
+             total_male = "B24010_117", # Male 
+             total_female = "B24010_268", # Female 
              
+             fulltime_male = "B24020_117", # Full time Male
+             fulltime_female = "B24020_268", # Full time Female
+            
+             white_male = "B24010A_032", # White Male 
+             white_female = "B24010A_068", # White Female 
              
-             B24010A_032, # White Male 
-             B24010A_068, # White Female 
-             B24010B_032, # Black Male 
-             B24010B_068, # Black Female 
-             B24010C_032, # Native Male
-             B24010C_068, # Native Female
-             B24010D_032, # Asian Male
-             B24010D_068, # Asian Female
-             B24010E_032, # Hawaii Male
-             B24010E_068, # Hawaii Female
-             B24010F_032, # Other race Male
-             B24010F_068, # Other race Female
-             B24010G_032, # 2 or more races Male
-             B24010G_068, # 2 or more races Female
-             B24010H_032, # White alone, Not Hispanic Male
-             B24010H_068, # White alone, Not Hispanic Female
-             B24010I_032, # Hispanic Male
-             B24010I_068 # Hispanic Female
+             black_male = "B24010B_032", # Black Male 
+             black_female = "B24010B_068", # Black Female 
+             
+             native_male = "B24010C_032", # Native Male
+             native_female = "B24010C_068", # Native Female
+             
+             asian_male = "B24010D_032", # Asian Male
+             asian_female = "B24010D_068", # Asian Female
+             
+             hawaii_male = "B24010E_032", # Hawaii Male
+             hawaii_female = "B24010E_068", # Hawaii Female
+             
+             otherrace_male = "B24010F_032", # Other race Male
+             otherrace_female = "B24010F_068", # Other race Female
+             
+             multirace_male = "B24010G_032", # 2 or more races Male
+             multirace_female = "B24010G_068", # 2 or more races Female
+             
+             white_nothispanic_male = "B24010H_032", # White alone, Not Hispanic Male
+             white_nothispanic_female  = "B24010H_068", # White alone, Not Hispanic Female
+             
+             hispanic_male = "B24010I_032", # Hispanic Male
+             hisapnic_female = "B24010I_068" # Hispanic Female
              )
 
 # setting years 
-years <- lst(2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 
-             2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2021)
+years <- lst(2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2021)
+
+##--4b. Extracting ACS data---------------------------------------------------------
+acs_dta <- map_dfr(
+  years,
+  ~ get_acs(
+    geography = "metropolitan statistical area/micropolitan statistical area",
+    variables = varlist,
+    year = .x,
+    survey = "acs1",
+    geometry = FALSE
+  ),
+  .id = "Year"  
+) %>%
+  select(-moe) %>%
+  arrange(variable, NAME) 
 
 
 
@@ -99,3 +388,4 @@ years <- lst(2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
 
 
 
+##--5. Keeping Relevant Datasets------------------------------------------------
