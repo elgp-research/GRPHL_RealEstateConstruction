@@ -52,4 +52,4 @@ rsconnect/
 .DS_Store
 
 # Large IPUMS extract file
-Data/.dat.gz
+Data/usa_00024.dat.gz
