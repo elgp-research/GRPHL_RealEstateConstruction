@@ -356,11 +356,11 @@ varlist <- c(total_employees = "B24060_031", # Total Construction Workers
              multirace_male = "B24010G_032", # 2 or more races Male
              multirace_female = "B24010G_068", # 2 or more races Female
              
-             white_nothispanic_male = "B24010H_032", # White alone, Not Hispanic Male
-             white_nothispanic_female  = "B24010H_068", # White alone, Not Hispanic Female
+             whiteNONHISPANIC_male = "B24010H_032", # White alone, Not Hispanic Male
+             whiteNONHISPANIC_female  = "B24010H_068", # White alone, Not Hispanic Female
              
              hispanic_male = "B24010I_032", # Hispanic Male
-             hisapnic_female = "B24010I_068" # Hispanic Female
+             hispanic_female = "B24010I_068" # Hispanic Female
              )
 
 # setting years 
@@ -387,5 +387,3 @@ acs_dta <- map_dfr(
 
 
 
-
-##--5. Keeping Relevant Datasets------------------------------------------------
