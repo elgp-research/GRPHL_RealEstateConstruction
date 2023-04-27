@@ -399,3 +399,18 @@ acs_dta <- map_dfr(
 
 
 
+
+##--5a. OES data import
+
+oes_data <- read_csv("Data/oes1221_allmetrosoccs_20220425.csv")
+oes_2022 <- read_excel("Data/MSA_M2022_dl.xlsx")
+
+# adding year to the oes_2022 data to match with master dataset
+oes_2022 <- oes_2022 %>% 
+  mutate(year = 2022)
+
+# Identify common columns
+common_cols <- intersect(names(oes_data), names(oes_2022))
+
+# Bind data frames based on common columns
+oes_master <- rbind(oes_data[,common_cols], oes_2022[,common_cols])
