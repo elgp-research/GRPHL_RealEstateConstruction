@@ -52,6 +52,7 @@ ces_fig <- ces_data %>%
 
 ces_fig
 
+
 ##--2a. ACS Data: Filters for Construction Ethnic Proportions----------------------------------------------
 
 # filtering for just race variables 
@@ -60,8 +61,16 @@ acs_race <- acs_dta %>%
       variable != "total_female" & 
       variable != "total_male" & 
       variable != "fulltime_female" & 
-      variable != "fulltime_male"
-      ) 
+      variable != "fulltime_male" & 
+      variable != "total_white" &
+      variable != "total_black" &
+      variable != "total_native" &
+      variable != "total_asian" &
+      variable != "total_hawaii" &
+      variable != "total_otherrace" &
+      variable != "total_multirace" &
+      variable != "total_hispanic"
+      )
 
 # Separate ethnicity column into race and gender columns
 acs_race <- separate(acs_race, variable, into = c("race", "gender"), sep = "_")
@@ -81,10 +90,11 @@ acs_race <- acs_race %>%
 # Generating proportional employment by race
 acs_race <- acs_race %>% 
   group_by(Year, NAME) %>% 
-  mutate(emp_prop = total_estimate/sum(total_estimate, na.rm = TRUE) * 100)
+  mutate(emp_prop = (total_estimate/sum(total_estimate, na.rm = TRUE)) * 100) %>% 
+  distinct(emp_prop, .keep_all = TRUE)
   
   
-##--2b. ACS Data: Ethnic Proportions Over Time-----------------------------------------
+##--2b. ACS Data: Graph Ethnic Proportions Over Time-----------------------------------------
 
 # Generate color palette
 my_colors <- c("#FF9200", "darkslategrey", "#FF4900", 
@@ -97,7 +107,7 @@ acs_race_fig <- acs_race %>%
   plot_ly(
     type = 'bar',
     x =~ as.factor(Year), 
-    y =~ total_estimate,
+    y =~ emp_prop,
     color =~ race,
     colors = my_colors,
     text =~ race,
@@ -204,10 +214,86 @@ acs_ethnic <- acs_dta %>%
          variable == "total_black" |
          variable == "total_native" |
          variable == "total_asian" |
-         variable == "total_hawaiin" |
-         variable == "total_other" |
-         variable == "total_multiethnic" |
+         variable == "total_hawaii" |
+         variable == "total_otherrace" |
+         variable == "total_multirace" |
          variable == "total_hispanic")
+
+# creating race variable for merging
+acs_ethnic$variable <- sub("total_", "", acs_ethnic$variable)
+
+# renaming race variable 
+acs_ethnic <- acs_ethnic %>% 
+  rename(race = variable)
+  
+
+# calculating proportions for each race 
+acs_ethnic <- acs_ethnic %>% 
+  group_by(Year, NAME) %>% 
+  mutate(total_pop = sum(estimate),
+         ethnic_prop = (estimate/sum(estimate, na.rm = TRUE)) * 100)
+
+##--2e. ACS Data: Combining Construction Ethnic Data and Overall Ethnic Data----
+temp_dta1 <- acs_race %>% 
+  select(-c(gender, estimate, total_estimate))
+
+temp_dta2 <- acs_ethnic %>% 
+  select(-c(estimate, total_pop))
+
+ethnic_merge <- temp_dta1 %>% 
+  inner_join(temp_dta2, by = c("Year", "GEOID", "NAME", "race"))
+
+# calculating over/under representation in construction industry by ethnicity 
+ethnic_merge <- ethnic_merge %>% 
+  group_by(NAME, race) %>% 
+  mutate(avg_employment = mean(emp_prop, na.rm = TRUE),
+         avg_ethnicity = mean(ethnic_prop, na.rm = TRUE)
+         ) %>% 
+  distinct(avg_employment, .keep_all = TRUE) %>% 
+  select(-c(emp_prop, ethnic_prop)) %>% 
+  gather(variable, proportion, avg_employment:avg_ethnicity)
+
+##--2f. ACS Data: Graph of Under representation in Construction Industry--------
+
+acs_map <- ethnic_merge %>% 
+  filter(NAME == "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD Metro Area") %>% 
+  plot_ly(
+    type = 'bar',
+    x =~ as.factor(race), 
+    y =~ proportion,
+    color =~ variable,
+    colors = c("#1097FF","#FF4900"),
+    text =~ race,
+    hovertemplate=paste("<i>%{text} in %{x}:</i><br>%{y:.1f}%")
+  ) %>%
+  layout(title = list(text="<br>      Under Representation of Employment in Construction Industry<br>      in Greater Philadelphia by Ethnicity",
+                      x=0,y=1),
+         font = list(family = "Georgia", color = "darkslategrey"),
+         hoverlabel = list(font = list(family = "Georgia")),
+         yaxis = list(title = "Proportion (%)", tickformat = "%d%%"),
+         xaxis = list(title = ""),
+         legend = list(
+           orientation = "h",
+           xanchor = "center",
+           x = 0.5,
+           yanchor = "top",
+           y = -0.1
+         ),
+         annotations = list(
+           x = 1.05, # X position of the caption (right side of the plot)
+           y = 1.1, # Y position of the caption (top of the plot)
+           text = "Source: ACS Data Estimates", # The text of the caption
+           showarrow = FALSE, # Don't show an arrow pointing to the caption
+           xref = "paper", # Set the X position reference to the plot area
+           yref = "paper", # Set the Y position reference to the plot area
+           font = list(size = 9, color = "grey80"), # Set the font size of the caption
+           align = "right", # Align the caption to the right
+           xanchor = "right", # Anchor the caption to the right side of the plot
+           yanchor = "top" # Anchor the caption to the top of the plot
+         ),
+         margin = list(l = 70, r = 70, b = 50, t = 70)
+  )
+acs_map
 
 
 ##--3a. IPUMS Data: filtering for Self-Employed Respondents-----------------------
@@ -281,6 +367,23 @@ ipums_race_fig <- ipums_construction %>%
   )
 
 ipums_race_fig
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
