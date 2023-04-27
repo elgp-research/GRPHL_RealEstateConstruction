@@ -327,7 +327,21 @@ ipums_construction <- occ_data %>%
 
 
 ##--4a. ACS data: Setting variable and year list for ACS-----------------------------------------
-varlist <- c(total_employees = "B24060_031", # Total Construction Workers
+varlist19 <- load_variables(year = 2019, dataset = "acs1")
+
+varlist <- c(
+             total_population = "B01003_001",
+             total_white = "B02001_002",
+             total_black = "B02001_003",
+             total_native = "B02001_004",
+             total_asian = "B02001_005",
+             total_hawaiin = "B02001_006",
+             total_other = "B02001_007",
+             total_multiethnic = "B02001_008",
+             total_hispanic = "B03001_003",
+             
+                
+             total_employees = "B24060_031", # Total Construction Workers
              
              total_male = "B24010_117", # Male 
              total_female = "B24010_268", # Female 
