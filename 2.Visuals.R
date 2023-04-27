@@ -111,14 +111,14 @@ acs_race_fig <- acs_race %>%
     color =~ race,
     colors = my_colors,
     text =~ race,
-    hovertemplate=paste("<i>%{text} in %{x}:</i><br>%{y}")
+    hovertemplate=paste("<i>%{text} in %{x}:</i><br>%{y:.1f}%")
   ) %>% 
   layout(barmode = 'stack',
          title = list(text="<br>      Employment Trends in the Construction Industry<br>      in Greater Philadelphia by Ethnicity",
                       x=0,y=1),
          font = list(family = "Georgia", color = "darkslategrey"),
          hoverlabel = list(font = list(family = "Georgia")),
-         yaxis = list(title = "Number of Employees"),
+         yaxis = list(title = "Proportion of Employees (%)"),
          xaxis = list(title = ""),
          legend = list(
            orientation = "h",
@@ -317,7 +317,10 @@ ipums_construction <- ipums_construction %>%
 # summing employers by race 
 ipums_construction <- ipums_construction %>% 
   group_by(YEAR, RACE) %>% 
-  mutate(Freq_adj = sum(Freq))
+  mutate(Freq_adj = sum(Freq)) %>% 
+  distinct(Freq_adj, .keep_all = TRUE) %>% 
+  group_by(YEAR) %>% 
+  mutate(prop_employers = (Freq_adj/sum(Freq_adj, na.rm = TRUE)) *100)
 
 ##--3b. IPUMS Data: Employer Mapping by Ethnicity-----------------------
 
@@ -327,22 +330,21 @@ my_colors <- c("#FF9200", "darkslategrey", "#FF4900",
 
 # bar graph of ethnic proportions of employers over time 
 ipums_race_fig <- ipums_construction %>% 
-  distinct(Freq_adj, .keep_all = TRUE) %>% 
   plot_ly(
     type = 'bar',
     x =~ YEAR, 
-    y =~ Freq_adj,
+    y =~ prop_employers,
     color =~ RACE,
     colors = my_colors,
     text =~ RACE,
-    hovertemplate=paste("<i>%{text} in %{x}:</i><br>%{y}")
+    hovertemplate=paste("<i>%{text} in %{x}:</i><br>%{y:.1f}%")
   ) %>% 
   layout(barmode = 'stack',
          title = list(text="<br>      Employer Trends in the Construction Industry<br>      in Greater Philadelphia by Ethnicity",
                       x=0,y=1),
          font = list(family = "Georgia", color = "darkslategrey"),
          hoverlabel = list(font = list(family = "Georgia")),
-         yaxis = list(title = "Number of Employers"),
+         yaxis = list(title = "Proportion of Employers (%)"),
          xaxis = list(title = ""),
          legend = list(
            orientation = "h",
@@ -368,25 +370,62 @@ ipums_race_fig <- ipums_construction %>%
 
 ipums_race_fig
 
+##--4a. OES Data: Construction Wage Trends----------------------------------------
 
+oes_graph <- oes_master %>% 
+  filter(OCC_CODE == "47-0000" & 
+         AREA == "37980")
 
+oes_plot <- plot_ly(data = oes_graph, 
+                    x = ~year, 
+                    y = ~as.numeric(H_MEAN), 
+                    name = "Mean Hourly Wage", 
+                    type = 'scatter',
+                    mode = 'lines+markers',
+                    line = list(color = '#FF4900'),
+                    marker = list(color = '#FF4900')) %>%
+  
+  add_trace(y = ~as.numeric(H_MEDIAN), 
+            name = "Median Hourly Wage", 
+            mode = 'lines+markers',
+            line = list(color = '#1097FF'),
+            marker = list(color = '#1097FF')) %>%
+  
+  add_trace(y = ~as.numeric(A_MEAN), 
+            name = "Mean Annual Wage", 
+            mode = 'lines+markers', 
+            visible = "legendonly",
+            line = list(color = '#FFBF00'),
+            marker = list(color = '#FFBF00')) %>% 
+  
+  layout(
+         title = list(text="<br>      Wage Trends in the Construction Sector in Greater Philadelphia ",
+                      x=0,y=1),
+         font = list(family = "Georgia", color = "darkslategrey"),
+         hoverlabel = list(font = list(family = "Georgia")),
+         yaxis = list(title = "Wage", tickformat = "$"),
+         xaxis = list(title = ""),
+         legend = list(
+           orientation = "h",
+           xanchor = "center",
+           x = 0.5,
+           yanchor = "top",
+           y = -0.1
+         ),
+         annotations = list(
+           x = 1.05, # X position of the caption (right side of the plot)
+           y = 1.1, # Y position of the caption (top of the plot)
+           text = "Source: OES Data Estimates", # The text of the caption
+           showarrow = FALSE, # Don't show an arrow pointing to the caption
+           xref = "paper", # Set the X position reference to the plot area
+           yref = "paper", # Set the Y position reference to the plot area
+           font = list(size = 9, color = "grey80"), # Set the font size of the caption
+           align = "right", # Align the caption to the right
+           xanchor = "right", # Anchor the caption to the right side of the plot
+           yanchor = "top" # Anchor the caption to the top of the plot
+         ),
+         margin = list(l = 70, r = 70, b = 50, t = 70)
+  )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+oes_plot
 
