@@ -16,7 +16,7 @@ ces_fig <- ces_data %>%
     x =~ date, 
     y =~ values,
     color =~ type,
-    colors = c("#006EB6","#F79B2E"),
+    colors = c("#1097FF","#FF4900"),
     text =~ type,
     hovertemplate=paste("<i>%{text} in %{x}:</i><br>%{y}")
   ) %>% 
@@ -52,7 +52,7 @@ ces_fig <- ces_data %>%
 
 ces_fig
 
-##--2a. ACS Data: Filters for Ethnic Proportions----------------------------------------------
+##--2a. ACS Data: Filters for Construction Ethnic Proportions----------------------------------------------
 
 # filtering for just race variables 
 acs_race <- acs_dta %>% 
@@ -134,7 +134,7 @@ acs_race_fig <- acs_race %>%
 
 acs_race_fig
 
-##--2c. ACS Data: Filters for Gender Proportions----------------------------------------------
+##--2c. ACS Data: Filter AND Graph for Gender Proportions----------------------------------------------
 
 # filtering for gender variables 
 acs_gender <- acs_dta %>% 
@@ -195,6 +195,19 @@ acs_gender_fig <- acs_gender %>%
   
 
 acs_gender_fig
+
+
+##--2d. ACS Data: Filters for Ethnic Makeup of GRPHL--------------------------------
+
+acs_ethnic <- acs_dta %>% 
+  filter(variable == "total_white" |
+         variable == "total_black" |
+         variable == "total_native" |
+         variable == "total_asian" |
+         variable == "total_hawaiin" |
+         variable == "total_other" |
+         variable == "total_multiethnic" |
+         variable == "total_hispanic")
 
 
 ##--3a. IPUMS Data: filtering for Self-Employed Respondents-----------------------
