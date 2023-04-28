@@ -53,6 +53,7 @@ ces_fig <- ces_data %>%
 ces_fig
 
 
+
 ##--2a. ACS Data: Filters for Construction Ethnic Proportions----------------------------------------------
 
 # filtering for just race variables 
@@ -101,11 +102,12 @@ acs_race_hispanic <- acs_race %>%
   distinct(emp_prop, .keep_all = TRUE) %>% 
   filter(race == "hispanic")
   
+
 ##--2b.1 ACS Data: Graph Ethnic Proportions Over Time (EXLUDING HISPANICS)-----------
 
 # Generate color palette
-my_colors <- c("pink", "#FF4900", 
-               "#7915FF", "#FFBF00", "#1097FF")  
+my_colors <- c("#FFBF00", "#7915FF",  
+               "#FF4900", "grey20", "#1097FF")  
 
 # bar graph of ethnic proportions of employment over time 
 acs_race_fig <- acs_race_nothispanic %>% 
@@ -154,7 +156,7 @@ acs_race_fig
 ##--2b.2 ACS Data: Graph Ethnic Proportions Over Time (INCLUDING HISPANICS)-----------
 
 # bar graph of ethnic proportions of employment over time 
-acs_race_fig <- acs_race_hispanic %>% 
+acs_hispanic_fig <- acs_race_hispanic %>% 
   filter(NAME == "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD Metro Area") %>% 
   plot_ly(
     type = 'bar',
@@ -193,7 +195,8 @@ acs_race_fig <- acs_race_hispanic %>%
          margin = list(l = 70, r = 70, b = 50, t = 80)
   )
 
-acs_race_fig
+acs_hispanic_fig
+
 
 ##--2c. ACS Data: Filter AND Graph for Gender Proportions----------------------------------------------
 
@@ -258,6 +261,7 @@ acs_gender_fig <- acs_gender %>%
 acs_gender_fig
 
 
+
 ##--2d. ACS Data: Filters for Ethnic Makeup of GRPHL--------------------------------
 
 acs_ethnic <- acs_dta %>% 
@@ -284,6 +288,7 @@ acs_ethnic <- acs_ethnic %>%
   mutate(total_pop = sum(estimate),
          ethnic_prop = (estimate/sum(estimate, na.rm = TRUE)) * 100)
 
+
 ##--2e. ACS Data: Combining Construction Ethnic Data and Overall Ethnic Data----
 temp_dta1 <- acs_race %>% 
   select(-c(gender, estimate, total_estimate))
@@ -303,6 +308,7 @@ ethnic_merge <- ethnic_merge %>%
   distinct(avg_employment, .keep_all = TRUE) %>% 
   select(-c(emp_prop, ethnic_prop)) %>% 
   gather(variable, proportion, avg_employment:avg_ethnicity)
+
 
 ##--2f. ACS Data: Graph of Under representation in Construction Industry--------
 
@@ -347,6 +353,7 @@ acs_map <- ethnic_merge %>%
 acs_map
 
 
+
 ##--3a. IPUMS Data: filtering for Self-Employed Respondents-----------------------
 
 ipums_construction <- ipums_construction %>% 
@@ -355,28 +362,31 @@ ipums_construction <- ipums_construction %>%
 
 # combining asian race classification
 ipums_construction <- ipums_construction %>% 
-  mutate(RACE = as.factor(as.character(RACE)),
-    RACE = ifelse(RACE == "Chinese", "Asian", 
-                       ifelse(RACE == "Japanese", "Asian",
-                              ifelse(RACE == "Other Asian or Pacific Islander", "Asian",
-                                     ifelse(RACE == "Other race, nec", "Other",
-                                            ifelse(RACE == "Two major races", "Multi-Ethnic",
-                                                   ifelse(RACE == "Three or more major races", "Multi-Ethnic",
-                                                          ifelse(RACE == "White", "White",
-                                                                 ifelse(RACE == "Black/African American", "Black/African American",
-                                                                        ifelse(RACE == "American Indian or Alaska Native", "American Indian or Alaska Native", RACE))))))))))
+  mutate(RACE_adj = as.factor(as.character(RACE_adj)),
+    RACE_adj = ifelse(RACE_adj == "Chinese", "Asian", 
+                       ifelse(RACE_adj == "Japanese", "Asian",
+                              ifelse(RACE_adj == "Other Asian or Pacific Islander", "Asian",
+                                     ifelse(RACE_adj == "Other race, nec", "Other",
+                                            ifelse(RACE_adj == "Two major races", "Multi-Ethnic",
+                                                   ifelse(RACE_adj == "Three or more major races", "Multi-Ethnic",
+                                                          ifelse(RACE_adj == "White", "White",
+                                                                 ifelse(RACE_adj == "Black/African American", "Black/African American",
+                                                                        ifelse(RACE_adj == "American Indian or Alaska Native", "American Indian or Alaska Native",
+                                                                               ifelse(RACE_adj == "Hispanic", "Hispanic", RACE_adj)))))))))))
 # summing employers by race 
 ipums_construction <- ipums_construction %>% 
-  group_by(YEAR, RACE) %>% 
+  group_by(YEAR, RACE_adj) %>% 
   mutate(Freq_adj = sum(Freq)) %>% 
   distinct(Freq_adj, .keep_all = TRUE) %>% 
   group_by(YEAR) %>% 
   mutate(prop_employers = (Freq_adj/sum(Freq_adj, na.rm = TRUE)) *100)
 
+
+
 ##--3b. IPUMS Data: Employer Mapping by Ethnicity-----------------------
 
 # Generate color palette
-my_colors <- c("#FF9200", "darkslategrey", "#FF4900", 
+my_colors <- c("grey", "#FF9200", "darkslategrey", "#FF4900", 
                "#7915FF", "#FFBF00", "#1097FF")  
 
 # bar graph of ethnic proportions of employers over time 
@@ -385,9 +395,9 @@ ipums_race_fig <- ipums_construction %>%
     type = 'bar',
     x =~ YEAR, 
     y =~ prop_employers,
-    color =~ RACE,
+    color =~ RACE_adj,
     colors = my_colors,
-    text =~ RACE,
+    text =~ RACE_adj,
     hovertemplate=paste("<i>%{text} in %{x}:</i><br>%{y:.1f}%")
   ) %>% 
   layout(barmode = 'stack',
@@ -420,6 +430,9 @@ ipums_race_fig <- ipums_construction %>%
   )
 
 ipums_race_fig
+
+
+
 
 ##--4a. OES Data: Construction Wage Trends----------------------------------------
 
