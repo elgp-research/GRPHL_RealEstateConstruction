@@ -395,12 +395,7 @@ acs_dta <- map_dfr(
   arrange(variable, NAME) 
 
 
-
-
-
-
-
-##--5a. OES data import
+##--5a. OES data import-------------------------------------------------------------
 
 oes_data <- read_csv("Data/oes1221_allmetrosoccs_20220425.csv")
 oes_2022 <- read_excel("Data/MSA_M2022_dl.xlsx")
