@@ -79,21 +79,23 @@ acs_race <- separate(acs_race, variable, into = c("race", "gender"), sep = "_")
 # Summing by ethnicity 
 acs_race <- acs_race %>% 
   group_by(Year, NAME, race) %>% 
-  mutate(total_estimate = sum(estimate))
+  mutate(total_estimate = sum(estimate, na.rm = TRUE)) %>% 
+  distinct(total_estimate, .keep_all = TRUE)
 
 # Removing "white" race category since it double counts as hispanic AND white
 acs_race <- acs_race %>% 
   filter(race != "white") %>% 
   mutate(race = ifelse(race == "whiteNONHISPANIC", "white", race),
          Year = as.factor(Year),
-         race = as.factor(race))
+         race = as.factor(race)) 
 
 # Generating proportional employment by race excluding hispanics
 acs_race_nothispanic <- acs_race %>% 
   filter(race != "hispanic") %>% 
   group_by(Year, NAME) %>% 
   mutate(emp_prop = (total_estimate/sum(total_estimate, na.rm = TRUE)) * 100) %>% 
-  distinct(emp_prop, .keep_all = TRUE)
+  distinct(emp_prop, .keep_all = TRUE) %>% 
+  filter(emp_prop != 0)
   
 # Generating proportional employment by race including hispanics
 acs_race_hispanic <- acs_race %>% 
@@ -102,6 +104,7 @@ acs_race_hispanic <- acs_race %>%
   distinct(emp_prop, .keep_all = TRUE) %>% 
   filter(race == "hispanic")
   
+
 
 ##--2b.1 ACS Data: Graph Ethnic Proportions Over Time (EXLUDING HISPANICS)-----------
 
@@ -153,6 +156,7 @@ acs_race_fig <- acs_race_nothispanic %>%
 acs_race_fig
 
 
+
 ##--2b.2 ACS Data: Graph Ethnic Proportions Over Time (INCLUDING HISPANICS)-----------
 
 # bar graph of ethnic proportions of employment over time 
@@ -196,6 +200,7 @@ acs_hispanic_fig <- acs_race_hispanic %>%
   )
 
 acs_hispanic_fig
+
 
 
 ##--2c. ACS Data: Filter AND Graph for Gender Proportions----------------------------------------------
@@ -281,7 +286,6 @@ acs_ethnic$variable <- sub("total_", "", acs_ethnic$variable)
 acs_ethnic <- acs_ethnic %>% 
   rename(race = variable)
   
-
 # calculating proportions for each race 
 acs_ethnic <- acs_ethnic %>% 
   group_by(Year, NAME) %>% 
@@ -290,7 +294,13 @@ acs_ethnic <- acs_ethnic %>%
 
 
 ##--2e. ACS Data: Combining Construction Ethnic Data and Overall Ethnic Data----
+
+# calculating proportions of employees by race in the employee data
+
 temp_dta1 <- acs_race %>% 
+  group_by(Year, NAME) %>% 
+  mutate(emp_prop = (total_estimate/sum(total_estimate, na.rm = TRUE)) * 100) %>% 
+  distinct(emp_prop, .keep_all = TRUE) %>% 
   select(-c(gender, estimate, total_estimate))
 
 temp_dta2 <- acs_ethnic %>% 
@@ -313,17 +323,19 @@ ethnic_merge <- ethnic_merge %>%
 ##--2f. ACS Data: Graph of Under representation in Construction Industry--------
 
 acs_map <- ethnic_merge %>% 
-  filter(NAME == "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD Metro Area") %>% 
+  filter(NAME == "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD Metro Area" & 
+           race != "hawaii") %>% 
+  arrange(proportion) %>% 
   plot_ly(
     type = 'bar',
-    x =~ as.factor(race), 
+    x =~ reorder(race, proportion), 
     y =~ proportion,
     color =~ variable,
     colors = c("#1097FF","#FF4900"),
     text =~ race,
     hovertemplate=paste("<i>%{text} in %{x}:</i><br>%{y:.1f}%")
   ) %>%
-  layout(title = list(text="<br>      Under Representation of Employment in Construction Industry<br>      in Greater Philadelphia by Ethnicity",
+  layout(title = list(text="<br>      10-year Average Employment Distribution and Ethnic Makeup of Residents<br>      in the Construction Industry in Greater Philadelphia",
                       x=0,y=1),
          font = list(family = "Georgia", color = "darkslategrey"),
          hoverlabel = list(font = list(family = "Georgia")),
