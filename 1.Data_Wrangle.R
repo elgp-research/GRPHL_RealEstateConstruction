@@ -319,11 +319,22 @@ dtaDesign     <- svydesign(id      = ~CLUSTER,
                            data    = ipums_philly)
 
 ##--3d. Cross tabulations--------------------------------------------------------------------------
-occ_table <- svytable(~YEAR+RACE+IND+CLASSWKR, design = dtaDesign)
-occ_data <- as.data.frame(occ_table) 
+occ_table <- svytable(~YEAR+RACE+HISPAN+IND+CLASSWKR, design = dtaDesign)
+occ_data <- as.data.frame(occ_table)
 
 ipums_construction <- occ_data %>% 
-  filter(IND == 770 | IND == 3080) # filtering for construction industry 
+  filter(IND == 770 | IND == 3080) %>% # filtering for construction industry 
+  mutate(RACE_adj = ifelse((RACE == "White" & HISPAN == "Not Hispanic"), "White", 
+                           ifelse((RACE == "Black/African American" & HISPAN == "Not Hispanic"), "Black/African American",
+                                  ifelse((RACE == "Other Asian or Pacific Islander" & HISPAN == "Not Hispanic"), "Other Asian or Pacific Islander",
+                                         ifelse((RACE == "Other race, nec" & HISPAN == "Not Hispanic"), "Other race, nec",
+                                                ifelse((RACE == "Two major races" & HISPAN == "Not Hispanic"), "Two major races",
+                                                       ifelse((RACE == "American Indian or Alaska Native" & HISPAN == "Not Hispanic"), "American Indian or Alaska Native",
+                                                              ifelse((RACE == "Chinese" & HISPAN == "Not Hispanic"), "Chinese",
+                                                                     ifelse((RACE == "Japanese" & HISPAN == "Not Hispanic"), "Japanese",
+                                                                            ifelse((RACE == "Three or more major races" & HISPAN == "Not Hispanic"), "Three or more major races", "Hispanic")))))))))) %>% 
+  filter(HISPAN != "Not Reported")
+  
 
 
 ##--4a. ACS data: Setting variable and year list for ACS-----------------------------------------
