@@ -393,8 +393,6 @@ ipums_construction <- ipums_construction %>%
   group_by(YEAR) %>% 
   mutate(prop_employers = (Freq_adj/sum(Freq_adj, na.rm = TRUE)) *100)
 
-
-
 ##--3b. IPUMS Data: Employer Mapping by Ethnicity-----------------------
 
 # Generate color palette
@@ -443,6 +441,83 @@ ipums_race_fig <- ipums_construction %>%
 
 ipums_race_fig
 
+
+
+
+##--3c. IPUMS Data + ACS Data: Mapping Employer and Ethnic Distributions------------------------
+
+# creating temporary data to match with ACS data 
+temp_dta3 <- ipums_construction %>% 
+  mutate(RACE_adj = tolower(RACE_adj),
+         RACE_adj =ifelse(RACE_adj == "black/african american", "black",
+                          ifelse(RACE_adj == "multi-ethnic", "multirace",
+                                 ifelse(RACE_adj == "american indian or alaska native", "native",
+                                        ifelse(RACE_adj == "other", "otherrace", RACE_adj))))
+         ) %>% 
+  rename(race = RACE_adj, 
+         Year = YEAR) %>% 
+  select(Year, race, prop_employers)
+
+# merging datasets
+temp_dta4 <- temp_dta2 %>% 
+  filter(NAME == "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD Metro Area")
+
+employer_map <- temp_dta4 %>% 
+  left_join(temp_dta3, by = c("Year", "race")) %>% 
+  filter(!is.na(prop_employers) | prop_employers == 0)
+
+# generating average employer and ethnic distributions
+employer_map <- employer_map %>% 
+  group_by(race) %>% 
+  mutate(avg_ethnicity = mean(ethnic_prop, na.rm = TRUE),
+         avg_employer = mean(prop_employers, na.rm = TRUE)
+         ) %>% 
+  distinct(avg_ethnicity, .keep_all = TRUE) %>% 
+  select(-c(ethnic_prop, prop_employers)) %>% 
+  arrange(avg_employer)
+
+##--3d. IPUMS Data + ACS Data: Graph Employer and Ethnic Distributions------------------------
+emp_map_figure <-   plot_ly(data = employer_map, 
+                    x = ~reorder(race, avg_employer),
+                    y = ~avg_employer, 
+                    name = "Average Employer Proportion", 
+                    type = 'bar',
+                    marker = list(color = '#FF4900')) %>%
+  
+  add_trace(y = ~avg_ethnicity, 
+            name = "Average Ethnic Proportion", 
+            type = 'bar',
+            marker = list(color = '#1097FF')) %>% 
+  
+  layout(
+    title = list(text="<br>      10-year Average Employer Distribution and Ethnic Makeup of Residents",
+                 x=0,y=1),
+    font = list(family = "Georgia", color = "darkslategrey"),
+    hoverlabel = list(font = list(family = "Georgia")),
+    yaxis = list(title = "Proportion (%)"),
+    xaxis = list(title = ""),
+    legend = list(
+      orientation = "h",
+      xanchor = "center",
+      x = 0.5,
+      yanchor = "top",
+      y = -0.1
+    ),
+    annotations = list(
+      x = 1.05, # X position of the caption (right side of the plot)
+      y = 1.1, # Y position of the caption (top of the plot)
+      text = "Source: IPUMS and ACS Data Estimates", # The text of the caption
+      showarrow = FALSE, # Don't show an arrow pointing to the caption
+      xref = "paper", # Set the X position reference to the plot area
+      yref = "paper", # Set the Y position reference to the plot area
+      font = list(size = 9, color = "grey80"), # Set the font size of the caption
+      align = "right", # Align the caption to the right
+      xanchor = "right", # Anchor the caption to the right side of the plot
+      yanchor = "top" # Anchor the caption to the top of the plot
+    ),
+    margin = list(l = 70, r = 70, b = 50, t = 70)
+  )
+emp_map_figure
 
 
 
