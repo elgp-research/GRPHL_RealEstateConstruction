@@ -87,22 +87,28 @@ acs_race <- acs_race %>%
          Year = as.factor(Year),
          race = as.factor(race))
 
-# Generating proportional employment by race
-acs_race <- acs_race %>% 
+# Generating proportional employment by race excluding hispanics
+acs_race_nothispanic <- acs_race %>% 
+  filter(race != "hispanic") %>% 
   group_by(Year, NAME) %>% 
   mutate(emp_prop = (total_estimate/sum(total_estimate, na.rm = TRUE)) * 100) %>% 
   distinct(emp_prop, .keep_all = TRUE)
   
+# Generating proportional employment by race including hispanics
+acs_race_hispanic <- acs_race %>% 
+  group_by(Year, NAME) %>% 
+  mutate(emp_prop = (total_estimate/sum(total_estimate, na.rm = TRUE)) * 100) %>% 
+  distinct(emp_prop, .keep_all = TRUE) %>% 
+  filter(race == "hispanic")
   
-##--2b. ACS Data: Graph Ethnic Proportions Over Time-----------------------------------------
+##--2b.1 ACS Data: Graph Ethnic Proportions Over Time (EXLUDING HISPANICS)-----------
 
 # Generate color palette
-my_colors <- c("#FF9200", "darkslategrey", "#FF4900", 
+my_colors <- c("pink", "#FF4900", 
                "#7915FF", "#FFBF00", "#1097FF")  
 
 # bar graph of ethnic proportions of employment over time 
-acs_race_fig <- acs_race %>% 
-  distinct(emp_prop, .keep_all = TRUE) %>% 
+acs_race_fig <- acs_race_nothispanic %>% 
   filter(NAME == "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD Metro Area") %>% 
   plot_ly(
     type = 'bar',
@@ -141,6 +147,51 @@ acs_race_fig <- acs_race %>%
          ),
          margin = list(l = 70, r = 70, b = 50, t = 80)
          )
+
+acs_race_fig
+
+
+##--2b.2 ACS Data: Graph Ethnic Proportions Over Time (INCLUDING HISPANICS)-----------
+
+# bar graph of ethnic proportions of employment over time 
+acs_race_fig <- acs_race_hispanic %>% 
+  filter(NAME == "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD Metro Area") %>% 
+  plot_ly(
+    type = 'bar',
+    x =~ as.factor(Year), 
+    y =~ emp_prop,
+    color =~ race,
+    colors = "#FF4900",
+    text =~ race,
+    hovertemplate=paste("<i>%{text} in %{x}:</i><br>%{y:.1f}%")
+  ) %>% 
+  layout(title = list(text="<br>      Employment Trends in the Construction Industry<br>      in Greater Philadelphia Among Hispanics",
+                      x=0,y=1),
+         font = list(family = "Georgia", color = "darkslategrey"),
+         hoverlabel = list(font = list(family = "Georgia")),
+         yaxis = list(title = "Proportion of Employees (%)"),
+         xaxis = list(title = ""),
+         legend = list(
+           orientation = "h",
+           xanchor = "center",
+           x = 0.5,
+           yanchor = "top",
+           y = -0.1
+         ),
+         annotations = list(
+           x = 1.05, # X position of the caption (right side of the plot)
+           y = 1.1, # Y position of the caption (top of the plot)
+           text = "Source: ACS Data Estimates", # The text of the caption
+           showarrow = FALSE, # Don't show an arrow pointing to the caption
+           xref = "paper", # Set the X position reference to the plot area
+           yref = "paper", # Set the Y position reference to the plot area
+           font = list(size = 9, color = "grey80"), # Set the font size of the caption
+           align = "right", # Align the caption to the right
+           xanchor = "right", # Anchor the caption to the right side of the plot
+           yanchor = "top" # Anchor the caption to the top of the plot
+         ),
+         margin = list(l = 70, r = 70, b = 50, t = 80)
+  )
 
 acs_race_fig
 
