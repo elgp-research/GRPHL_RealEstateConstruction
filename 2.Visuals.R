@@ -1,6 +1,8 @@
 ##--libraries-------------------------------------------------------------------
 library(plotly)
 library(RColorBrewer)
+library(leaflet)
+library(sf)
 
 ##--sourcing R file-------------------------------------------------------------------
 source("1.Data_Wrangle.R")
@@ -51,7 +53,6 @@ ces_fig <- ces_data %>%
   )
 
 ces_fig
-
 
 
 ##--2a. ACS Data: Filters for Construction Ethnic Proportions----------------------------------------------
@@ -546,7 +547,7 @@ oes_graph %>%
   labs(y = "Wages", x = "", 
        title = "Wages in Greater Philadelphia for the Construction Sector",
        caption = "Note: All wages are inflation-adjusted to 2022 dollars. \nSource: OES Data") +
-  theme_linedraw() + 
+  theme_light() + 
   theme(axis.title = element_blank(),
         #panel.grid.major.x = element_blank(),
         #panel.grid.major.y = element_blank(),
@@ -567,6 +568,70 @@ oes_graph %>%
         axis.ticks.x = element_blank(),
         plot.margin = margin(0.2,0.2,0.2,0.2, "cm"))
 
+
+
+
+
+
+##--5a. GIS Data: Map of Wages by Metropolitan Regions in the U.S.
+
+# turning data frame into an 'sf' object for the leaflet package
+GIS_data_sf <- st_as_sf(GIS_data, wkt = "geometry")
+
+# Transform the data to the WGS84 SRS to remove the warning message from R
+GIS_data_sf_transformed <- st_transform(GIS_data_sf, "+proj=longlat +datum=WGS84")
+
+# Create color palettes for each variable
+pal1 <- colorNumeric(palette = "YlOrRd", domain = GIS_data$H_MEAN)
+pal2 <- colorNumeric(palette = "GnBu", domain = GIS_data$H_MEDIAN)
+pal3 <- colorNumeric(palette = "Oranges", domain = GIS_data$A_MEAN)
+pal4 <- colorNumeric(palette = "Blues", domain = GIS_data$A_MEDIAN)
+
+# Create leaflet map object
+map <- leaflet(GIS_data_sf_transformed) %>%
+  addTiles() %>%
+  addPolygons(
+    fillColor = ~pal1(H_MEAN),
+    fillOpacity = 0.7,
+    color = "#444444",
+    weight = 1,
+    popup = ~paste("Region: ", NAME, "<br>",
+                   "Mean Hourly Wage: $", round(H_MEAN,2))
+  ) %>%
+  addPolygons(
+    fillColor = ~pal2(H_MEDIAN),
+    fillOpacity = 0.7,
+    color = "#444444",
+    weight = 1,
+    popup = ~paste("Region: ", NAME, "<br>",
+                   "Median Hourly Wage: $", H_MEDIAN)
+  ) %>%
+  addPolygons(
+    fillColor = ~pal3(A_MEAN),
+    fillOpacity = 0.7,
+    color = "#444444",
+    weight = 1,
+    popup = ~paste("Region: ", NAME, "<br>",
+                   "Mean Annual Wage: $", A_MEAN)
+  ) %>%
+  addPolygons(
+    fillColor = ~pal4(A_MEDIAN),
+    fillOpacity = 0.7,
+    color = "#444444",
+    weight = 1,
+    popup = ~paste("Region: ", NAME, "<br>",
+                   "Median Annual Wage: $", A_MEDIAN)
+  )
+
+# Add layers control to the map
+map <- map %>% addLayersControl(
+  baseGroups = c("H_MEAN", "H_MEDIAN", "A_MEAN", "A_MEDIAN"),
+  overlayGroups = c(),
+  options = layersControlOptions(collapsed = FALSE)
+)
+
+# Print map
+map
 
 
 
