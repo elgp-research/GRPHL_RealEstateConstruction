@@ -339,7 +339,7 @@ ipums_construction <- occ_data %>%
 
 
 ##--4a. ACS data: Setting variable and year list for ACS-----------------------------------------
-#varlist19 <- load_variables(year = 2019, dataset = "acs1")
+varlist19 <- load_variables(year = 2019, dataset = "acs1")
 
 varlist <- c(
              total_white = "B02001_002",
@@ -391,7 +391,7 @@ varlist <- c(
 # setting years 
 years <- lst(2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2021)
 
-##--4b. Extracting ACS data---------------------------------------------------------
+##--4b. ACS data Extract---------------------------------------------------------
 acs_dta <- map_dfr(
   years,
   ~ get_acs(
@@ -406,7 +406,16 @@ acs_dta <- map_dfr(
   select(-moe) %>%
   arrange(variable, NAME) 
 
-
+# geo-mapping data for just 2021
+acs_map_dta <- get_acs(
+    geography = "metropolitan statistical area/micropolitan statistical area",
+    variables = "B01003_001",
+    year = 2021,
+    survey = "acs1",
+    geometry = TRUE
+  ) %>% 
+  mutate(GEOID = as.integer(GEOID))
+  
 ##--5a. OES data import-------------------------------------------------------------
 
 # Extract combined OES file from the zip archive to a temporary directory
@@ -468,8 +477,28 @@ oes_philly <- oes_philly %>%
          
          )
 
+##--6a. ACS + OES Mapping Data 2021---------------------------------------------
 
+# filtering relevant information for mapping
+oes_21 <- oes_data %>% 
+  filter(year == 2021 & OCC_CODE == "47-0000") %>% 
+  rename(GEOID = AREA)
 
+# merging with the acs map data 
+GIS_data <- acs_map_dta %>% 
+  inner_join(oes_21, by = "GEOID") %>% 
+  select(GEOID, NAME, OCC_TITLE, H_MEAN, H_MEDIAN, A_MEAN, A_MEDIAN)
 
+# storing cpi value for 2021
+cpi_2021 <- cpi_data$Annual[cpi_data$year == 2021]
+
+# adjusting wage numbers for inflation 
+GIS_data <- GIS_data %>% 
+  mutate(H_MEAN = (H_MEAN / cpi_2021) * cpi_2022,
+         H_MEDIAN = (H_MEDIAN / cpi_2021) * cpi_2022,
+         A_MEAN = (A_MEAN / cpi_2021) * cpi_2022,
+         A_MEDIAN = (A_MEDIAN / cpi_2021) * cpi_2022
+         )
+  
 
 
