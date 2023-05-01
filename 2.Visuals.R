@@ -523,31 +523,50 @@ emp_map_figure
 
 ##--4a. OES Data: Construction Wage Trends----------------------------------------
 
-oes_graph <- oes_master %>% 
-  filter(OCC_CODE == "47-0000" & 
-         AREA == "37980")
+# filtering for "Manufacturing" and "All Occupations" 
+oes_graph <- oes_philly %>% 
+  filter(OCC_CODE == "47-0000" | OCC_CODE == "00-0000") %>% 
+  select(PRIM_STATE, AREA, OCC_CODE, OCC_TITLE, year, H_MEAN_real, H_MEDIAN_real, A_MEAN_real, A_MEDIAN_real) %>% 
+  gather(wage_type, amount, H_MEAN_real:A_MEDIAN_real) %>% 
+  mutate(year_date = as.Date(paste0(year, "-01-01")))
+
+# ggplot of wages
+oes_graph %>% 
+  ggplot(aes(x=year_date, y = amount, color = OCC_TITLE)) + 
+  geom_line(aes(linetype = OCC_TITLE, group = OCC_TITLE)) +  
+  facet_wrap(~wage_type, scale = "free_y") + 
+  scale_linetype_manual(values = c("dashed", "solid")) + 
+  scale_color_manual(values = c("#1097FF", "#FF4900")) +
+  labs(y = "Wages", x = "", title = "Wages (inflation-adjusted) in Greater Philadelphia \nfor Construction Sector") +
+  theme(legend.position = "bottom",
+        legend.direction = "horizontal") 
+
+
 
 oes_plot <- plot_ly(data = oes_graph, 
                     x = ~year, 
-                    y = ~as.numeric(H_MEAN), 
+                    y = ~H_MEAN_real, 
+                    color = ~OCC_TITLE,
                     name = "Mean Hourly Wage", 
                     type = 'scatter',
-                    mode = 'lines+markers',
-                    line = list(color = '#FF4900'),
-                    marker = list(color = '#FF4900')) %>%
+                    mode = 'lines+markers') %>% 
+                     line = list(color = '#FF4900'),
+                     marker = list(color = '#FF4900')) %>%
   
-  add_trace(y = ~as.numeric(H_MEDIAN), 
+  add_trace(y = ~H_MEDIAN_real, 
+            color = ~OCC_TITLE,
             name = "Median Hourly Wage", 
-            mode = 'lines+markers',
+            mode = 'lines+markers') %>% 
             line = list(color = '#1097FF'),
-            marker = list(color = '#1097FF')) %>%
+            # marker = list(color = '#1097FF')) %>%
   
-  add_trace(y = ~as.numeric(A_MEAN), 
+  add_trace(y = ~A_MEAN_real, 
+            color = ~OCC_TITLE,
             name = "Mean Annual Wage", 
             mode = 'lines+markers', 
-            visible = "legendonly",
-            line = list(color = '#FFBF00'),
-            marker = list(color = '#FFBF00')) %>% 
+            visible = "legendonly") %>% 
+            # line = list(color = '#FFBF00'),
+            # marker = list(color = '#FFBF00')) %>% 
   
   layout(
          title = list(text="<br>      Wage Trends in the Construction Sector in Greater Philadelphia ",
