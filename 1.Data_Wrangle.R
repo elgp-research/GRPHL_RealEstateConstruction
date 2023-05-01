@@ -433,3 +433,43 @@ common_cols <- intersect(names(oes_data), names(oes_2022))
 
 # Bind data frames based on common columns
 oes_master <- rbind(oes_data[,common_cols], oes_2022[,common_cols])
+
+##--5b. OES data inflation adjustment-------------------------------------------
+
+# Read the CPI data into R 
+cpi_data <- read_excel("Data/cpi_data.xlsx")
+cpi_data <- cpi_data[-c(1,2,3,4,5,6,7,8,9,10),]
+names(cpi_data) <- cpi_data[1,]
+cpi_data <- cpi_data[-1,]
+cpi_data$Annual <- as.numeric(cpi_data$Annual)
+cpi_data$Year <- as.numeric(cpi_data$Year)
+cpi_data <- cpi_data %>% 
+  rename(year = Year)
+cpi_2022 <- cpi_data$Annual[cpi_data$year == 2022]
+
+#**** NOTE: THIS CPI IS FOR GREATER PHILADELPHIA ONLY 
+
+# merging cpi data and oes data by year
+oes_philly <- oes_master %>% 
+  filter(AREA == "37980") %>% 
+  left_join(cpi_data, by = "year")
+
+# Applying the inflation factor to wage numbers in OES data 
+oes_philly <- oes_philly %>% 
+  mutate(H_MEAN = as.numeric(H_MEAN),
+         H_MEDIAN = as.numeric(H_MEDIAN),
+         A_MEAN = as.numeric(A_MEAN),
+         A_MEDIAN = as.numeric(A_MEDIAN),
+         
+         H_MEAN_real = (H_MEAN / Annual) * cpi_2022,
+         H_MEDIAN_real = (H_MEDIAN / Annual) * cpi_2022,
+         A_MEAN_real = (A_MEAN / Annual) * cpi_2022,
+         A_MEDIAN_real = (A_MEDIAN / Annual) * cpi_2022
+         
+         )
+
+
+
+
+
+
