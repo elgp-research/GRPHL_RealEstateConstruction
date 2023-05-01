@@ -528,7 +528,12 @@ oes_graph <- oes_philly %>%
   filter(OCC_CODE == "47-0000" | OCC_CODE == "00-0000") %>% 
   select(PRIM_STATE, AREA, OCC_CODE, OCC_TITLE, year, H_MEAN_real, H_MEDIAN_real, A_MEAN_real, A_MEDIAN_real) %>% 
   gather(wage_type, amount, H_MEAN_real:A_MEDIAN_real) %>% 
-  mutate(year_date = as.Date(paste0(year, "-01-01")))
+  mutate(year_date = as.Date(paste0(year, "-01-01")),
+         wage_type = ifelse(wage_type == "A_MEAN_real", "Mean Annual Wage",
+                            ifelse(wage_type == "A_MEDIAN_real", "Median Annual Wage",
+                                   ifelse(wage_type == "H_MEAN_real", "Mean Hourly Wage",
+                                          ifelse(wage_type == "H_MEDIAN_real", "Median Hourly Wage", wage_type))))
+         ) 
 
 # ggplot of wages
 oes_graph %>% 
@@ -537,65 +542,32 @@ oes_graph %>%
   facet_wrap(~wage_type, scale = "free_y") + 
   scale_linetype_manual(values = c("dashed", "solid")) + 
   scale_color_manual(values = c("#1097FF", "#FF4900")) +
-  labs(y = "Wages", x = "", title = "Wages (inflation-adjusted) in Greater Philadelphia \nfor Construction Sector") +
-  theme(legend.position = "bottom",
-        legend.direction = "horizontal") 
+  scale_y_continuous(labels = function(x) paste0("$", x)) + 
+  labs(y = "Wages", x = "", 
+       title = "Wages in Greater Philadelphia for the Construction Sector",
+       caption = "Note: All wages are inflation-adjusted to 2022 dollars. \nSource: OES Data") +
+  theme_linedraw() + 
+  theme(axis.title = element_blank(),
+        #panel.grid.major.x = element_blank(),
+        #panel.grid.major.y = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.title = element_blank(),
+        legend.justification = c(0, 1),
+        legend.background = element_blank(),
+        legend.position = "bottom",
+        legend.direction="horizontal",
+        legend.text = element_text(),
+        text = element_text(family = "Georgia"),
+        strip.text = element_text(color = "black"),
+        plot.title = element_text(size = 15, margin = margin(b = 10, t = 5), color = "darkslategrey", hjust = 0.5),
+        plot.subtitle = element_text(size = 10, color = "grey40", margin = margin(b = 10)),
+        plot.caption = element_text(size = 8, margin = margin(t = 10), color = "grey50", hjust = 0),
+        axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 10), color = "darkslategrey", ),
+        axis.title.x = element_text(margin = margin(t = 10, r = 10, b = 0, l = 10), color = "darkslategrey", ),
+        axis.ticks.x = element_blank(),
+        plot.margin = margin(0.2,0.2,0.2,0.2, "cm"))
 
 
 
-oes_plot <- plot_ly(data = oes_graph, 
-                    x = ~year, 
-                    y = ~H_MEAN_real, 
-                    color = ~OCC_TITLE,
-                    name = "Mean Hourly Wage", 
-                    type = 'scatter',
-                    mode = 'lines+markers') %>% 
-                     line = list(color = '#FF4900'),
-                     marker = list(color = '#FF4900')) %>%
-  
-  add_trace(y = ~H_MEDIAN_real, 
-            color = ~OCC_TITLE,
-            name = "Median Hourly Wage", 
-            mode = 'lines+markers') %>% 
-            line = list(color = '#1097FF'),
-            # marker = list(color = '#1097FF')) %>%
-  
-  add_trace(y = ~A_MEAN_real, 
-            color = ~OCC_TITLE,
-            name = "Mean Annual Wage", 
-            mode = 'lines+markers', 
-            visible = "legendonly") %>% 
-            # line = list(color = '#FFBF00'),
-            # marker = list(color = '#FFBF00')) %>% 
-  
-  layout(
-         title = list(text="<br>      Wage Trends in the Construction Sector in Greater Philadelphia ",
-                      x=0,y=1),
-         font = list(family = "Georgia", color = "darkslategrey"),
-         hoverlabel = list(font = list(family = "Georgia")),
-         yaxis = list(title = "Wage", tickformat = "$"),
-         xaxis = list(title = ""),
-         legend = list(
-           orientation = "h",
-           xanchor = "center",
-           x = 0.5,
-           yanchor = "top",
-           y = -0.1
-         ),
-         annotations = list(
-           x = 1.05, # X position of the caption (right side of the plot)
-           y = 1.1, # Y position of the caption (top of the plot)
-           text = "Source: OES Data Estimates", # The text of the caption
-           showarrow = FALSE, # Don't show an arrow pointing to the caption
-           xref = "paper", # Set the X position reference to the plot area
-           yref = "paper", # Set the Y position reference to the plot area
-           font = list(size = 9, color = "grey80"), # Set the font size of the caption
-           align = "right", # Align the caption to the right
-           xanchor = "right", # Anchor the caption to the right side of the plot
-           yanchor = "top" # Anchor the caption to the top of the plot
-         ),
-         margin = list(l = 70, r = 70, b = 50, t = 70)
-  )
 
-oes_plot
 
