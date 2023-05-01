@@ -4,6 +4,7 @@ library(tidycensus)
 library(readxl)
 library(ipumsr)
 library(survey)
+library(readr)
 options(scipen=999)
 
 ##--1a. CES data import-----------------------------------------------------------------
@@ -408,7 +409,19 @@ acs_dta <- map_dfr(
 
 ##--5a. OES data import-------------------------------------------------------------
 
-oes_data <- read_csv("Data/oes1221_allmetrosoccs_20220425.csv")
+# Extract combined OES file from the zip archive to a temporary directory
+zip_file <- "Data/oes1221_allmetrosoccs_20220425.csv.zip"
+temp_dir <- tempfile()
+unzip(zip_file, exdir = temp_dir)
+
+# Read the CSV file into a data frame
+csv_file <- file.path(temp_dir, "oes1221_allmetrosoccs_20220425.csv")
+oes_data <- read.csv(csv_file)
+
+# Clean up the temporary directory
+unlink(temp_dir, recursive = TRUE)
+
+# Adding OES 2022 data
 oes_2022 <- read_excel("Data/MSA_M2022_dl.xlsx")
 
 # adding year to the oes_2022 data to match with master dataset
