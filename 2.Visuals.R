@@ -573,7 +573,7 @@ oes_graph %>%
 
 
 
-##--5a. GIS Data: Map of Wages by Metropolitan Regions in the U.S.
+##--5a. GIS Data: Map of Wages by Metropolitan Regions in the U.S.--------------
 
 # turning data frame into an 'sf' object for the leaflet package
 GIS_data_sf <- st_as_sf(GIS_data, wkt = "geometry")
@@ -582,40 +582,10 @@ GIS_data_sf <- st_as_sf(GIS_data, wkt = "geometry")
 GIS_data_sf_transformed <- st_transform(GIS_data_sf, "+proj=longlat +datum=WGS84")
 
 # Create color palettes for each variable
-pal1 <- colorNumeric(palette = "YlOrRd", domain = GIS_data$H_MEAN)
-pal2 <- colorNumeric(palette = "Blues", domain = GIS_data$H_MEDIAN)
-pal3 <- colorNumeric(palette = "Blues", domain = GIS_data$A_MEAN)
-pal4 <- colorNumeric(palette = "Oranges", domain = GIS_data$A_MEDIAN)
+pal2 <- colorNumeric(palette = "YlOrRd", domain = GIS_data$H_MEDIAN)
+pal4 <- colorNumeric(palette = "RdPu", domain = GIS_data$A_MEDIAN)
 
-##--5b. GIS Data: Mean Wage------------------------------------------------------
-map <- leaflet(GIS_data_sf_transformed) %>%
-  addTiles() %>%
-  addPolygons(
-    group = "H_MEAN",
-    fillColor = ~pal1(H_MEAN),
-    fillOpacity = 0.7,
-    color = "#444444",
-    weight = 1,
-    popup = ~paste("Region: ", NAME, "<br>",
-                   "Mean Hourly Wage: $", round(H_MEAN,2))
-  )
-# Set the initial view of the map to the center of the United States
-map <- map %>% setView(
-  lng = -98.583333,
-  lat = 39.833333,
-  zoom = 4
-)
-# Add a legend to the map
-map <- map %>% addLegend(
-  pal = pal1,
-  values = ~H_MEAN,
-  position = "bottomright",
-  title = "Mean Hourly Wage"
-)
-# Print map
-map
-
-##--5c. GIS Data: Median Wage------------------------------------------------------
+##--5c. GIS Data: Median Hourly Wage------------------------------------------------------
 map <- leaflet(GIS_data_sf_transformed) %>%
   addTiles() %>%
   addPolygons(
@@ -637,13 +607,40 @@ map <- map %>% setView(
   values = ~H_MEDIAN,
   position = "bottomright",
   title = "Median Hourly Wage"
-) %>% addControl(
-  html = "<h2>Median Hourly Wage</h2>",
-  position = "topleft"
 )
 # Print map
 map
 
+##--5e. GIS Data: Median Annual Wage------------------------------------------------------
+map <- leaflet(GIS_data_sf_transformed) %>%
+  addTiles() %>%
+  addPolygons(
+    group = "A_MEDIAN",
+    fillColor = ~pal4(A_MEDIAN),
+    fillOpacity = 0.7,
+    color = "#444444",
+    weight = 1,
+    popup = ~paste("Region: ", NAME, "<br>",
+                   "Annual Median Wage: $", round(A_MEDIAN,2))
+  )
+# Set the initial view of the map to the center of the United States
+map <- map %>% setView(
+  lng = -98.583333,
+  lat = 39.833333,
+  zoom = 4
+) %>% addLegend(
+  pal = pal4,
+  values = ~A_MEDIAN,
+  position = "bottomright",
+  title = "Median Annual Wage"
+)
+# Print map
+map
 
+##--6a. SCATTERPLOT BETWEEN CONSTRUCTION WAGES AND POPULATION---------------------
+
+GIS_data %>% 
+  ggplot(aes(x=log(estimate), y=H_MEDIAN)) + 
+  geom_point() + geom_smooth() 
 
 
