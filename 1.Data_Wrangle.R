@@ -312,14 +312,14 @@ ipums_philly <- ipums_data %>%
   filter(MET2013 == 37980) # filtering for just Philadelphia metro
 
 
-##--3c. Survey weights--------------------------------------------------------------------------
+##--3c. IPUMS Survey weights--------------------------------------------------------------------------
 dtaDesign     <- svydesign(id      = ~CLUSTER,
                            strata  = ~STRATA,
                            weights = ~PERWT,
                            nest    = TRUE,
                            data    = ipums_philly)
 
-##--3d. Cross tabulations--------------------------------------------------------------------------
+##--3d. IPUMS Cross tabulations: RACE -------------------------------------------------------
 occ_table <- svytable(~YEAR+RACE+HISPAN+IND+CLASSWKR, design = dtaDesign)
 occ_data <- as.data.frame(occ_table)
 
@@ -336,7 +336,44 @@ ipums_construction <- occ_data %>%
                                                                             ifelse((RACE == "Three or more major races" & HISPAN == "Not Hispanic"), "Three or more major races", "Hispanic")))))))))) %>% 
   filter(HISPAN != "Not Reported")
   
+##--3e. IPUMS Cross tabulations: AGE -------------------------------------------------------
 
+# Identifying distribution of construction employers by age 
+occ_table <- svytable(~YEAR+AGE+IND+CLASSWKR, design = dtaDesign)
+occ_data <- as.data.frame(occ_table)
+
+# creating age brackets 
+ipums_age <- occ_data %>% 
+  mutate(AGE = as.numeric(AGE),
+    age_bracket = ifelse(AGE < 20, "Less than 20 years", 
+                              ifelse((AGE >= 20 & AGE < 40), "20-39",
+                                     ifelse((AGE >=40 & AGE < 60), "40-59",
+                                            ifelse((AGE >= 60 & AGE < 80), "60-79",
+                                                    ifelse(AGE >= 80, "80-100", AGE
+                                     )))))) %>% 
+  filter(IND == 770 & # filtering for construction industry employers
+         CLASSWKR == "Self-employed") %>% 
+  group_by(YEAR, age_bracket) %>% 
+  mutate(Freq_sum = sum(Freq)) %>% 
+  distinct(Freq_sum, .keep_all = TRUE) %>% 
+  group_by(YEAR) %>% 
+  mutate(age_prop = Freq_sum/sum(Freq_sum) * 100)
+
+# 
+
+##--3f. IPUMS Cross tabulations: GENDER -------------------------------------------------------
+
+# Identifying distribution of construction employers by gender 
+occ_table <- svytable(~YEAR+SEX+IND+CLASSWKR, design = dtaDesign)
+occ_data <- as.data.frame(occ_table)
+# creating age brackets 
+ipums_gender <- occ_data %>% 
+  filter(IND == 770 & # filtering for construction industry employers
+         CLASSWKR == "Self-employed") %>% 
+  group_by(YEAR) %>% 
+  mutate(gender_prop = Freq/sum(Freq) * 100) %>% 
+  group_by(SEX) %>% 
+  mutate(avg_gender_prop = mean(gender_prop))
 
 ##--4a. ACS data: Setting variable and year list for ACS-----------------------------------------
 varlist19 <- load_variables(year = 2019, dataset = "acs1")
@@ -441,7 +478,7 @@ oes_2022 <- oes_2022 %>%
 common_cols <- intersect(names(oes_data), names(oes_2022))
 
 # Bind data frames based on common columns
-oes_master <- rbind(oes_data[,common_cols], oes_2022[,common_cols])
+oes_master <- rbind(oes_data[,common_cols], oes_2022[,common_cols])cd
 
 ##--5b. OES data inflation adjustment-------------------------------------------
 
