@@ -56,6 +56,8 @@ ces_fig <- ces_data %>%
 ces_fig
 
 
+
+
 ##--2a. ACS Data: Filters for Construction Ethnic Proportions----------------------------------------------
 
 # filtering for just race variables 
@@ -105,6 +107,7 @@ acs_race_hispanic <- acs_race %>%
   distinct(emp_prop, .keep_all = TRUE) %>% 
   filter(race == "hispanic")
   
+
 
 ##--2b.1 ACS Data: Graph Ethnic Proportions Over Time (EXLUDING HISPANICS)-----------
 
@@ -202,6 +205,7 @@ acs_hispanic_fig <- acs_race_hispanic %>%
 acs_hispanic_fig
 
 
+
 ##--2c. ACS Data: Filter AND Graph for Gender Proportions----------------------------------------------
 
 # filtering for gender variables 
@@ -266,6 +270,7 @@ acs_gender_fig
 
 
 
+
 ##--2d. ACS Data: Filters for Ethnic Makeup of GRPHL--------------------------------
 
 acs_pop <- acs_dta %>% 
@@ -290,6 +295,7 @@ acs_pop <- acs_pop %>%
   group_by(Year, NAME) %>% 
   mutate(total_pop = sum(estimate),
          ethnic_prop = (estimate/sum(estimate, na.rm = TRUE)) * 100)
+
 
 
 ##--2e. ACS Data: Combining Construction Ethnic Data and Overall Ethnic Data----
@@ -317,6 +323,7 @@ ethnic_merge <- ethnic_merge %>%
   distinct(avg_employment, .keep_all = TRUE) %>% 
   select(-c(emp_prop, ethnic_prop)) %>% 
   gather(variable, proportion, avg_employment:avg_ethnicity)
+
 
 
 ##--2f. ACS Data: Graph of Under representation in Construction Industry--------
@@ -362,6 +369,133 @@ acs_map <- ethnic_merge %>%
          margin = list(l = 70, r = 70, b = 50, t = 70)
   )
 acs_map
+
+
+
+
+##--2g.1. ACS Data: Ethnic Proportions at County level----------------------------------------------
+
+# filtering for just race variables 
+acs_race_county <- acs_county_dta %>% 
+  filter(variable != "total_employees" & 
+           variable != "total_female" & 
+           variable != "total_male" & 
+           variable != "fulltime_female" & 
+           variable != "fulltime_male" & 
+           variable != "total_white" &
+           variable != "total_black" &
+           variable != "total_native" &
+           variable != "total_asian" &
+           variable != "total_hawaii" &
+           variable != "total_otherrace" &
+           variable != "total_multirace" &
+           variable != "total_hispanic"
+  )
+
+# Separate ethnicity column into race and gender columns
+acs_race_county <- separate(acs_race_county, variable, into = c("race", "gender"), sep = "_")
+
+# Summing by ethnicity 
+acs_race_county <- acs_race_county %>% 
+  group_by(Year, NAME, race) %>% 
+  mutate(total_estimate = sum(estimate, na.rm = TRUE)) %>% 
+  distinct(total_estimate, .keep_all = TRUE)
+
+# Removing whiteNONHISPANICS 
+acs_race_county <- acs_race_county %>% 
+  filter(race != "whiteNONHISPANIC") %>% 
+  mutate(Year = as.factor(Year),
+         race = as.factor(race)) 
+
+# Generating proportional employment by race
+acs_race_county <- acs_race_county %>% 
+  group_by(Year, NAME) %>% 
+  mutate(emp_prop = (total_estimate/sum(total_estimate, na.rm = TRUE)) * 100) %>% 
+  distinct(emp_prop, .keep_all = TRUE) %>% 
+  filter(emp_prop != 0)
+
+##--2g.2. ACS Data: Population at County level------------
+
+acs_pop <- acs_county_dta %>% 
+  filter(variable == "total_white" |
+           variable == "total_black" |
+           variable == "total_native" |
+           variable == "total_asian" |
+           variable == "total_hawaii" |
+           variable == "total_otherrace" |
+           variable == "total_multirace" |
+           variable == "total_hispanic")
+
+# creating race variable for merging
+acs_pop$variable <- sub("total_", "", acs_pop$variable)
+
+# renaming race variable 
+acs_pop <- acs_pop %>% 
+  rename(race = variable)
+
+# calculating proportions for each race 
+acs_pop <- acs_pop %>% 
+  group_by(Year, NAME) %>% 
+  mutate(total_pop = sum(estimate),
+         ethnic_prop = (estimate/sum(estimate, na.rm = TRUE)) * 100)
+
+
+
+##--2g.3. ACS Data: Combining County Ethnic Data and Overall Ethnic Data----
+
+# calculating proportions of employees by race in the employee data
+
+temp_dta1 <- acs_race_county %>% 
+  select(-c(gender, estimate, total_estimate))
+
+temp_dta2 <- acs_pop %>% 
+  select(-c(estimate, total_pop))
+
+ethnic_merge <- temp_dta1 %>% 
+  inner_join(temp_dta2, by = c("Year", "GEOID", "NAME", "race"))
+
+# calculating over/under representation in construction industry by ethnicity 
+ethnic_merge <- ethnic_merge %>%
+  group_by(Year, NAME) %>% 
+  mutate(diff_prop = emp_prop - ethnic_prop) %>% 
+  group_by(race) %>% 
+  mutate(avg_diff_prop = mean(diff_prop, na.rm = TRUE))
+
+##--2g.4. ACS Data: Lollipop Plot of Representation in Construction Industry----
+
+ethnic_merge %>%
+  filter(NAME == "Philadelphia County, Pennsylvania") %>% 
+  distinct(avg_diff_prop, .keep_all = TRUE) %>% 
+  ggplot(aes(x=reorder(race, avg_diff_prop),  y=avg_diff_prop)) +
+  geom_segment( aes(x=reorder(race, avg_diff_prop), xend=reorder(race, avg_diff_prop), 
+                    y=0, yend=avg_diff_prop), color="grey") +
+  geom_point( color="orange", size=4) +
+  geom_hline(yintercept = 0, color = "grey") +
+  theme_light() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks.x = element_blank()
+  ) +
+  xlab("") +
+  ylab("Value of Y")
+  
+
+
+
+
+
+##--2g.4. ACS Data: MAP of Counties whose construction sector looks the least like their ethnic proportion----
+
+ethnic_map <- ethnic_merge %>% 
+  group_by(NAME) %>% 
+  distinct(avg_diff_prop, .keep_all = TRUE)
+
+ethnic_map <- ethnic_map %>% 
+  group_by(NAME) %>% 
+  mutate(rep_indicator = sum(avg_diff_prop))
+
+
 
 
 
