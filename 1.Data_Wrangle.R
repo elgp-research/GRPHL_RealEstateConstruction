@@ -376,7 +376,7 @@ ipums_gender <- occ_data %>%
   mutate(avg_gender_prop = mean(gender_prop))
 
 ##--4a. ACS data: Setting variable and year list for ACS-----------------------------------------
-varlist19 <- load_variables(year = 2019, dataset = "acs1")
+#varlist19 <- load_variables(year = 2019, dataset = "acs1")
 
 varlist <- c(
              total_white = "B02001_002",
@@ -453,6 +453,21 @@ acs_map_dta <- get_acs(
   ) %>% 
   mutate(GEOID = as.integer(GEOID))
   
+# county level data for the same variables 
+acs_county_dta <- map_dfr(
+  years,
+  ~ get_acs(
+    geography = "county",
+    variables = varlist,
+    year = .x,
+    survey = "acs1",
+    geometry = FALSE
+  ),
+  .id = "Year"  
+) %>%
+  select(-moe) %>%
+  arrange(variable, NAME) 
+
 ##--5a. OES data import-------------------------------------------------------------
 
 # Extract combined OES file from the zip archive to a temporary directory
