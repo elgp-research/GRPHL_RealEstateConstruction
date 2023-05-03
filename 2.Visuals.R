@@ -3,6 +3,7 @@ library(plotly)
 library(RColorBrewer)
 library(leaflet)
 library(sf)
+library(waffle)
 
 ##--sourcing R file-------------------------------------------------------------------
 source("1.Data_Wrangle.R")
@@ -569,6 +570,19 @@ ipums_age_fig <- ipums_age %>%
   )
 
 ipums_age_fig
+##--3f. IPUMS Data: Employer Distribution by Gender--------------------------------
+
+# Create a named vector of data
+ipums_gender <- c(`Males`= 95, `Females`=5)
+
+# Create a waffle plot
+waffle(ipums_gender, rows=10,
+       colors = c("#1097FF", "#FF4900"),
+       legend_pos = "bottom") + 
+  ggtitle("Proportion of Employers in the Construction Sector \nin Greater Philadelphia by Gender") + 
+  theme(plot.title = element_text(family = "Georgia", color = "darkslategrey", size = 16, hjust = 0))
+
+
 ##--4a. OES Data: Construction Wage Trends----------------------------------------
 
 # filtering for "Manufacturing" and "All Occupations" 
