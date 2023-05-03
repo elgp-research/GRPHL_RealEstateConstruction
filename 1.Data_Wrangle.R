@@ -376,7 +376,7 @@ ipums_gender <- occ_data %>%
   mutate(avg_gender_prop = mean(gender_prop))
 
 ##--4a. ACS data: Setting variable and year list for ACS-----------------------------------------
-#varlist19 <- load_variables(year = 2019, dataset = "acs1")
+varlist19 <- load_variables(year = 2019, dataset = "acs1")
 
 varlist <- c(
              total_white = "B02001_002",
@@ -445,7 +445,7 @@ acs_dta <- map_dfr(
 
 # geo-mapping data for just 2021
 acs_map_dta <- get_acs(
-    geography = "metropolitan statistical area/micropolitan statistical area",
+    geography = "county",
     variables = "B01003_001",
     year = 2021,
     survey = "acs1",
