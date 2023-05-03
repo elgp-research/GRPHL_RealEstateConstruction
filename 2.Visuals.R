@@ -86,9 +86,8 @@ acs_race <- acs_race %>%
 
 # Removing "white" race category since it double counts as hispanic AND white
 acs_race <- acs_race %>% 
-  filter(race != "white") %>% 
-  mutate(race = ifelse(race == "whiteNONHISPANIC", "white", race),
-         Year = as.factor(Year),
+  filter(race != "whiteNONHISPANIC") %>% 
+  mutate(Year = as.factor(Year),
          race = as.factor(race)) 
 
 # Generating proportional employment by race excluding hispanics
@@ -106,7 +105,6 @@ acs_race_hispanic <- acs_race %>%
   distinct(emp_prop, .keep_all = TRUE) %>% 
   filter(race == "hispanic")
   
-
 
 ##--2b.1 ACS Data: Graph Ethnic Proportions Over Time (EXLUDING HISPANICS)-----------
 
@@ -204,7 +202,6 @@ acs_hispanic_fig <- acs_race_hispanic %>%
 acs_hispanic_fig
 
 
-
 ##--2c. ACS Data: Filter AND Graph for Gender Proportions----------------------------------------------
 
 # filtering for gender variables 
@@ -271,7 +268,7 @@ acs_gender_fig
 
 ##--2d. ACS Data: Filters for Ethnic Makeup of GRPHL--------------------------------
 
-acs_ethnic <- acs_dta %>% 
+acs_pop <- acs_dta %>% 
   filter(variable == "total_white" |
          variable == "total_black" |
          variable == "total_native" |
@@ -282,14 +279,14 @@ acs_ethnic <- acs_dta %>%
          variable == "total_hispanic")
 
 # creating race variable for merging
-acs_ethnic$variable <- sub("total_", "", acs_ethnic$variable)
+acs_pop$variable <- sub("total_", "", acs_pop$variable)
 
 # renaming race variable 
-acs_ethnic <- acs_ethnic %>% 
+acs_pop <- acs_pop %>% 
   rename(race = variable)
   
 # calculating proportions for each race 
-acs_ethnic <- acs_ethnic %>% 
+acs_pop <- acs_pop %>% 
   group_by(Year, NAME) %>% 
   mutate(total_pop = sum(estimate),
          ethnic_prop = (estimate/sum(estimate, na.rm = TRUE)) * 100)
@@ -305,7 +302,7 @@ temp_dta1 <- acs_race %>%
   distinct(emp_prop, .keep_all = TRUE) %>% 
   select(-c(gender, estimate, total_estimate))
 
-temp_dta2 <- acs_ethnic %>% 
+temp_dta2 <- acs_pop %>% 
   select(-c(estimate, total_pop))
 
 ethnic_merge <- temp_dta1 %>% 
@@ -573,14 +570,18 @@ ipums_age_fig
 ##--3f. IPUMS Data: Employer Distribution by Gender--------------------------------
 
 # Create a named vector of data
-ipums_gender <- c(`Males`= 95, `Females`=5)
+ipums_gender <- c(`Females`=5, `Males`= 95)
 
 # Create a waffle plot
 waffle(ipums_gender, rows=10,
-       colors = c("#1097FF", "#FF4900"),
+       colors = c("#FF4900", "#1097FF"),
        legend_pos = "bottom") + 
-  ggtitle("Proportion of Employers in the Construction Sector \nin Greater Philadelphia by Gender") + 
-  theme(plot.title = element_text(family = "Georgia", color = "darkslategrey", size = 16, hjust = 0))
+  labs(title = "Proportion of Employers in the Construction Sector \nin Greater Philadelphia by Gender",
+       caption = "Note: Each box represents one percentage of the entire construction industry \nin Greater Philadelphia. These estimates are 16-year average of employer \nproportion across gender.") + 
+  theme(
+    text = element_text(family = "Georgia", color = "darkslategrey"),
+    plot.title = element_text(size = 14, hjust = 0),
+    plot.caption = element_text(size = 8, hjust = 0, color = "grey50"))
 
 
 ##--4a. OES Data: Construction Wage Trends----------------------------------------
