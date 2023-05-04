@@ -4,6 +4,7 @@ library(RColorBrewer)
 library(leaflet)
 library(sf)
 library(waffle)
+library(sfheaders)
 
 ##--sourcing R file-------------------------------------------------------------------
 source("1.Data_Wrangle.R")
@@ -491,28 +492,26 @@ ethnic_map <- ethnic_map %>%
 
 # merge with shape files of counties
 ethnic_map <- ethnic_map %>% 
-  inner_join(acs_map_dta, by = c("GEOID", "NAME")) 
+  inner_join(acs_map_dta, by = c("GEOID", "NAME")) %>% 
+  filter(!is.na(map_diff))
 
 # turning data frame into an 'sf' object for the leaflet package
+ethnic_map$geometry <- st_as_text(ethnic_map$geometry)
 GIS_data_sf <- st_as_sf(ethnic_map, wkt = "geometry")
 
-# Transform the data to the WGS84 SRS to remove the warning message from R
-GIS_data_sf_transformed <- st_transform(GIS_data_sf, "+proj=longlat +datum=WGS84")
-
 # Create color palettes for each variable
-pal2 <- colorNumeric(palette = "YlOrRd", domain = GIS_data$H_MEDIAN)
-pal4 <- colorNumeric(palette = "RdPu", domain = GIS_data$A_MEDIAN)
+pal2 <- colorNumeric(palette = "Spectral", domain = ethnic_map$map_diff)
 
-map <- leaflet(GIS_data_sf_transformed) %>%
+map <- leaflet(GIS_data_sf) %>%
   addTiles() %>%
   addPolygons(
-    group = "H_MEDIAN",
-    fillColor = ~pal2(H_MEDIAN),
+    group = "map_diff",
+    fillColor = ~pal2(map_diff),
     fillOpacity = 0.7,
     color = "#444444",
     weight = 1,
-    popup = ~paste("Region: ", NAME, "<br>",
-                   "Median Hourly Wage: $", round(H_MEDIAN,2))
+    popup = ~paste("County: ", NAME, "<br>",
+                   "Difference", round(map_diff,2))
   )
 # Set the initial view of the map to the center of the United States
 map <- map %>% setView(
@@ -521,9 +520,9 @@ map <- map %>% setView(
   zoom = 4
 ) %>% addLegend(
   pal = pal2,
-  values = ~H_MEDIAN,
+  values = ~map_diff,
   position = "bottomright",
-  title = "Median Hourly Wage"
+  title = "Representation (%)"
 )
 # Print map
 map
