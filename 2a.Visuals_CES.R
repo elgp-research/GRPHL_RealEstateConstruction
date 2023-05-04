@@ -5,7 +5,7 @@ library(RColorBrewer)
 ##--sourcing R file-------------------------------------------------------------------
 source("1.Data_Wrangle.R")
 
-##--1. CES Data: Employment Trends in Construction---------------------------------------------
+##--1. CES Data: Indexed Growth of Construction----------------------------------------
 ces_data <- rbind(ces_employees, ces_pctchange)
 
 # line graph of employment over time 
