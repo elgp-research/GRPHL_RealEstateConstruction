@@ -7,44 +7,88 @@ library(survey)
 library(readr)
 options(scipen=999)
 
-##--1a. CES data import-----------------------------------------------------------------
-
-ces_employees <- read_excel("Data/ces_employees.xlsx")
-ces_pctchange <- read_excel("Data/ces_pctchange.xlsx")
-
-# store both datasets in a list
-cesDataList <- list(ces_employees, ces_pctchange)
-
-##--1b. CES data clean-----------------------------------------------------------------
+##--1a. CES data clean-----------------------------------------------------------------
 
 # define a cleaning function
-ces_clean <- function(data, index) {
-  data <- data[-c(1,2,3,4,5,6,7,8,9,10,11),] # removing empty rows in the data
+ces_clean <- function(filename) {
+  
+  data <- read.csv(file = filename)
+
+  data <- data %>% 
+    mutate(sector = Col_2[8],
+           data_type = Col_2[10])
+  
+  data$sector[13] <- "sector"
+  data$data_type[13] <- "data_type"
+  
+  data <- data[-c(1,2,3,4,5,6,7,8,9,10,11,12),] # removing empty rows in the dataa
   colnames(data) <- as.character(unlist(data[1, ])) # set column names based on first row values
   data <- data[-1,]
+  
   data <- data %>% 
     gather(month, values, Jan:Dec) %>% 
-    mutate(values = as.numeric(values),
-           date = as.Date(paste(Year, month, "01", sep = "-"), format = "%Y-%b-%d")
+    mutate(values = as.numeric(values)
            ) %>% 
-    select(Year, date, values)
-  # create a new variable with a different value depending on the index of the data frame
-  if (index == 1) {
-    data$type <- "No. of employees (in thousands)"
-  } else if (index == 2) {
-    data$type <- "12-Month Percentage change"
-  }
-  # arranging by date 
-  data <- data %>% 
-    arrange(date)
-  return(data)
+    select(Year, sector, values)
 }
 
-# apply the cleaning function to each dataset in the list
-cleanCESdata <- lapply(seq_along(cesDataList), function(i) ces_clean(cesDataList[[i]], i))
-ces_employees <- cleanCESdata[[1]]
-ces_pctchange <- cleanCESdata[[2]]
+# creating filenames for the datasets
+filenames <- list.files(path = "Data/CES",
+                        pattern = ".csv",
+                        full.names = TRUE)
 
+# passing ces_clean function through all the data files
+cleaned_data <- lapply(filenames, function(x) {
+  
+  # Apply your custom cleaning function to the data
+  cleaned_data <- ces_clean(x)
+  
+  # Return the cleaned data
+  return(cleaned_data)
+})
+
+# Combine the cleaned data frames into a single master data frame
+master_ces_data <- do.call(rbind, cleaned_data)
+
+##--1b. CES data: creating sector historical proportions--------------------------------
+
+# calculating annual employment in each sector
+master_ces_data <- master_ces_data %>% 
+  group_by(Year, sector) %>% 
+  mutate(annual_employment = mean(values, na.rm = TRUE)) %>% 
+  distinct(annual_employment, .keep_all = TRUE)
+
+# calculating proportional employment in each sector per year
+master_ces_data <- master_ces_data %>% 
+  group_by(Year) %>%
+  mutate(prop_employment = annual_employment/sum(annual_employment))
+
+# calculating average proportional employment in each sector for the entire time period
+master_ces_data <- master_ces_data %>% 
+  group_by(sector) %>% 
+  mutate(avg_prop_employment = mean(prop_employment, na.rm = TRUE))  
+
+
+
+##--1c. CES data: filter data for visuals---------------------------------------
+
+# data for pie chart proportions
+ces_proportions <- master_ces_data %>% 
+  distinct(avg_prop_employment, .keep_all = TRUE)
+  
+# data for indexed growth 
+ces_growth <- master_ces_data %>% 
+  mutate(construction_indicator = ifelse(sector == "Mining, Logging, and Construction", "Construction", "Overall Economy")) %>% 
+  group_by(Year, construction_indicator) %>% 
+  mutate(avg_indicator_employment = mean(annual_employment, na.rm = TRUE)) %>% 
+  distinct(avg_indicator_employment, .keep_all = TRUE) 
+
+ces_growth <- ces_growth %>% 
+  mutate(Year = as.character(Year)) %>% 
+  group_by(construction_indicator) %>% 
+  mutate(indx_growth = avg_indicator_employment/(avg_indicator_employment[which(Year == "1990.0")]))
+
+  
 ##--2a. ABS data import-----------------------------------------------------------------
 
 abs_data <- read_csv("Data/abs_data.csv")
@@ -429,7 +473,7 @@ varlist <- c(
 years <- lst(2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2021)
 
 ##--4b. ACS data Extract---------------------------------------------------------
-acs_dta <- map_dfr(
+acs_metro_dta <- map_dfr(
   years,
   ~ get_acs(
     geography = "metropolitan statistical area/micropolitan statistical area",
