@@ -56,8 +56,6 @@ ces_fig <- ces_data %>%
 ces_fig
 
 
-
-
 ##--2a. ACS Data: Filters for Construction Ethnic Proportions----------------------------------------------
 
 # filtering for just race variables 
@@ -107,7 +105,6 @@ acs_race_hispanic <- acs_race %>%
   distinct(emp_prop, .keep_all = TRUE) %>% 
   filter(race == "hispanic")
   
-
 
 ##--2b.1 ACS Data: Graph Ethnic Proportions Over Time (EXLUDING HISPANICS)-----------
 
@@ -205,7 +202,6 @@ acs_hispanic_fig <- acs_race_hispanic %>%
 acs_hispanic_fig
 
 
-
 ##--2c. ACS Data: Filter AND Graph for Gender Proportions----------------------------------------------
 
 # filtering for gender variables 
@@ -267,7 +263,6 @@ acs_gender_fig <- acs_gender %>%
   
 
 acs_gender_fig
-
 
 
 
@@ -372,7 +367,6 @@ acs_map
 
 
 
-
 ##--2g.1. ACS Data: Ethnic Proportions at County level----------------------------------------------
 
 # filtering for just race variables 
@@ -414,7 +408,7 @@ acs_race_county <- acs_race_county %>%
   distinct(emp_prop, .keep_all = TRUE) %>% 
   filter(emp_prop != 0)
 
-##--2g.2. ACS Data: Population at County level------------
+##--2g.2. ACS Data: Ethnic Proportions AND Population at County level------------
 
 acs_pop <- acs_county_dta %>% 
   filter(variable == "total_white" |
@@ -457,19 +451,22 @@ ethnic_merge <- temp_dta1 %>%
 # calculating over/under representation in construction industry by ethnicity 
 ethnic_merge <- ethnic_merge %>%
   group_by(Year, NAME) %>% 
-  mutate(diff_prop = emp_prop - ethnic_prop) %>% 
-  group_by(race) %>% 
-  mutate(avg_diff_prop = mean(diff_prop, na.rm = TRUE))
+  mutate(diff_prop = emp_prop - ethnic_prop) 
+
+# calculating average difference in representation by county
+ethnic_merge <- ethnic_merge %>% 
+  group_by(GEOID, race) %>% 
+  mutate(avg_diff_prop = mean(diff_prop, na.rm = TRUE)) %>% 
+  distinct(avg_diff_prop, .keep_all = TRUE)
 
 ##--2g.4. ACS Data: Lollipop Plot of Representation in Construction Industry----
 
 ethnic_merge %>%
   filter(NAME == "Philadelphia County, Pennsylvania") %>% 
-  distinct(avg_diff_prop, .keep_all = TRUE) %>% 
   ggplot(aes(x=reorder(race, avg_diff_prop),  y=avg_diff_prop)) +
-  geom_segment( aes(x=reorder(race, avg_diff_prop), xend=reorder(race, avg_diff_prop), 
-                    y=0, yend=avg_diff_prop), color="grey") +
-  geom_point( color="orange", size=4) +
+  geom_segment(aes(x=reorder(race, avg_diff_prop), xend=reorder(race, avg_diff_prop), 
+                    y=0, yend=avg_diff_prop), color="#1097FF") +
+  geom_point( color="#FF4900", size=4) +
   geom_hline(yintercept = 0, color = "grey") +
   theme_light() +
   theme(
@@ -481,22 +478,55 @@ ethnic_merge %>%
   ylab("Value of Y")
   
 
-
-
-
-
 ##--2g.4. ACS Data: MAP of Counties whose construction sector looks the least like their ethnic proportion----
 
 ethnic_map <- ethnic_merge %>% 
   group_by(NAME) %>% 
-  distinct(avg_diff_prop, .keep_all = TRUE)
+  mutate(map_diff = sum(avg_diff_prop))
 
 ethnic_map <- ethnic_map %>% 
   group_by(NAME) %>% 
-  mutate(rep_indicator = sum(avg_diff_prop))
+  distinct(map_diff, .keep_all = TRUE) %>% 
+  mutate(GEOID = as.integer(GEOID))
 
+# merge with shape files of counties
+ethnic_map <- ethnic_map %>% 
+  inner_join(acs_map_dta, by = c("GEOID", "NAME")) 
 
+# turning data frame into an 'sf' object for the leaflet package
+GIS_data_sf <- st_as_sf(ethnic_map, wkt = "geometry")
 
+# Transform the data to the WGS84 SRS to remove the warning message from R
+GIS_data_sf_transformed <- st_transform(GIS_data_sf, "+proj=longlat +datum=WGS84")
+
+# Create color palettes for each variable
+pal2 <- colorNumeric(palette = "YlOrRd", domain = GIS_data$H_MEDIAN)
+pal4 <- colorNumeric(palette = "RdPu", domain = GIS_data$A_MEDIAN)
+
+map <- leaflet(GIS_data_sf_transformed) %>%
+  addTiles() %>%
+  addPolygons(
+    group = "H_MEDIAN",
+    fillColor = ~pal2(H_MEDIAN),
+    fillOpacity = 0.7,
+    color = "#444444",
+    weight = 1,
+    popup = ~paste("Region: ", NAME, "<br>",
+                   "Median Hourly Wage: $", round(H_MEDIAN,2))
+  )
+# Set the initial view of the map to the center of the United States
+map <- map %>% setView(
+  lng = -98.583333,
+  lat = 39.833333,
+  zoom = 4
+) %>% addLegend(
+  pal = pal2,
+  values = ~H_MEDIAN,
+  position = "bottomright",
+  title = "Median Hourly Wage"
+)
+# Print map
+map
 
 
 ##--3a. IPUMS Data: filtering for Self-Employed Respondents-----------------------
@@ -767,8 +797,6 @@ oes_graph %>%
 
 
 
-
-
 ##--5a. GIS Data: Map of Wages by Metropolitan Regions in the U.S.--------------
 
 # turning data frame into an 'sf' object for the leaflet package
@@ -832,11 +860,5 @@ map <- map %>% setView(
 )
 # Print map
 map
-
-##--6a. SCATTERPLOT BETWEEN CONSTRUCTION WAGES AND POPULATION---------------------
-
-GIS_data %>% 
-  ggplot(aes(x=log(estimate), y=H_MEDIAN)) + 
-  geom_point() + geom_smooth() 
 
 
