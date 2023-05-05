@@ -14,7 +14,7 @@ ces_growth %>%
   geom_hline(yintercept = 1, color = "grey40") + 
   scale_color_manual(values = c("#1097FF","#FF4900")) +
   labs(x = "", y = "Indexed Growth",
-    title = "Employment Growth in Greater Philadelphia",
+    title = "Employment Growth in Greater Philadelphia (1990-2023)",
     subtitle = "This graph shows the indexed growth of the economy of Greater Philadelphia since 1990 \ncompared with the employment growth in the Construction, Mining and Extraction industry.",
     caption = "Source: Current Employment Statistics") + 
   theme_minimal() + 
@@ -54,7 +54,7 @@ ces_proportions %>%
                                "grey80", "grey80", "grey80")) +
   geom_text(x = -5.5, y = -28, label = "1.4%", size = 3.5, family = "Georgia", color = "darkslategrey") +
   geom_label(x = 0.5, y = 3, label = " \nConstruction Sector \n 115,480 employees \n ",
-             size = 7, family = "Georgia", color = "darkslategrey", fill = "#1097FF") +
+             size = 7, family = "Georgia", color = "darkslategrey", fill = "#9dceff") +
   coord_polar(theta = "y") +
   xlim(c(0.2, hsize + 0.5)) +
   labs(title = "Average Size of Construction Sector in Greater Philadelphia \n(1990-2023)",
