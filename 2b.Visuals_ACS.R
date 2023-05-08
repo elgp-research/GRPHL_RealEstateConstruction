@@ -193,7 +193,7 @@ ethnic_merge <- ethnic_merge %>%
   mutate(avg_diff_prop = mean(diff_prop, na.rm = TRUE)) %>% 
   distinct(avg_diff_prop, .keep_all = TRUE)
 
-##--2g.4. ACS Data: Philadelphia vs. Rest of Greater Philadelphia
+##--2g.4. ACS Data: Philadelphia vs. Rest of Greater Philadelphia---------------
 
 # filtering counties in Greater Philadelphia excluding Philadelphia 
 philly_prime <- ethnic_merge %>% 
@@ -221,7 +221,7 @@ region_employment <- rbind(philly, philly_prime)
 region_employment <- region_employment %>% 
   mutate(race = paste0(toupper(substr(race, 1, 1)), substr(race, 2, nchar(race))))
 
-##--2g.4. ACS Data: Barplot Plot of Representation at County Level----
+##--2g.5. ACS Data: Barplot Plot of Representation at County Level----
 
 region_employment %>%
   filter(race != "Otherrace") %>% 
@@ -260,3 +260,5 @@ region_employment %>%
 
 
 
+
+##--2
