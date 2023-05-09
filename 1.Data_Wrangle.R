@@ -537,7 +537,7 @@ oes_2022 <- oes_2022 %>%
 common_cols <- intersect(names(oes_data), names(oes_2022))
 
 # Bind data frames based on common columns
-oes_master <- rbind(oes_data[,common_cols], oes_2022[,common_cols])cd
+oes_master <- rbind(oes_data[,common_cols], oes_2022[,common_cols])
 
 ##--5b. OES data inflation adjustment-------------------------------------------
 
@@ -596,5 +596,51 @@ GIS_data <- GIS_data %>%
          A_MEDIAN = (A_MEDIAN / cpi_2021) * cpi_2022
          )
   
+
+
+##--7a. QCEW data clean---------------------------------------------------------
+# define a cleaning function
+
+qcew_clean <- function(filename) {
+  
+  data <- read.csv(file = filename)
+  
+  data <- data %>% 
+    mutate(sector = X[7],
+           data_type = X[10])
+  
+  data$sector[13] <- "sector"
+  data$data_type[13] <- "data_type"
+  
+  data <- data[-c(1,2,3,4,5,6,7,8,9,10,11,12),] # removing empty rows in the data
+  colnames(data) <- as.character(unlist(data[1, ])) # set column names based on first row values
+  data <- data[-1,]
+  
+  data <- data %>% 
+    gather(month, values, Jan:Dec) %>% 
+    mutate(values = as.numeric(values)
+    ) %>% 
+    select(Year, month, sector, values)
+}
+
+# applying clean function to philadelphia construction industry
+philly_construction <- qcew_clean("Data/QCEW/Philadelphia_County/SeriesReport-20230508173256_1d0869.csv")
+
+# calculating average number of employees in construction sector in Philadelphia
+philly_construction <- philly_construction %>% 
+  mutate(avg_emp_prop = mean(values, na.rm = TRUE))
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
