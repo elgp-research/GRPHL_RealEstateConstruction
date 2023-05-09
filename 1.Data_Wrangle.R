@@ -420,7 +420,7 @@ ipums_gender <- occ_data %>%
   mutate(avg_gender_prop = mean(gender_prop))
 
 ##--4a. ACS data: Setting variable and year list for ACS-----------------------------------------
-#varlist19 <- load_variables(year = 2019, dataset = "acs1")
+varlist19 <- load_variables(year = 2019, dataset = "acs1")
 
 varlist <- c(
              total_white = "B02001_002",
