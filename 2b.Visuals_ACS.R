@@ -5,109 +5,12 @@ library(leaflet)
 library(sf)
 library(waffle)
 library(sfheaders)
+library(patchwork)
 
 ##--sourcing R file-------------------------------------------------------------------
 source("1.Data_Wrangle.R")
 
-##--2a. ACS Data: Filters for Construction Employment in GRPHL------------------------
-
-# filtering for just race variables 
-acs_race <- acs_metro_dta %>% 
-  filter(variable != "total_employees" & 
-           variable != "total_female" & 
-           variable != "total_male" & 
-           variable != "fulltime_female" & 
-           variable != "fulltime_male" & 
-           variable != "total_white" &
-           variable != "total_black" &
-           variable != "total_native" &
-           variable != "total_asian" &
-           variable != "total_hawaii" &
-           variable != "total_otherrace" &
-           variable != "total_multirace" &
-           variable != "total_hispanic"
-  )
-
-# Separate ethnicity column into race and gender columns
-acs_race <- separate(acs_race, variable, into = c("race", "gender"), sep = "_")
-
-# Summing by ethnicity 
-acs_race <- acs_race %>% 
-  group_by(Year, NAME, race) %>% 
-  mutate(total_estimate = sum(estimate, na.rm = TRUE)) %>% 
-  distinct(total_estimate, .keep_all = TRUE)
-
-# Removing "white" race category since it double counts as hispanic AND white
-acs_race <- acs_race %>% 
-  filter(race != "whiteNONHISPANIC") %>% 
-  mutate(Year = as.factor(Year),
-         race = as.factor(race)) 
-
-
-##--2c. ACS Data: Filter AND Graph for Gender Proportions of GRPHL----------------------------------------------
-
-# filtering for gender variables 
-acs_gender <- acs_metro_dta %>% 
-  filter(variable == "total_employees" |
-           variable == "total_female" | 
-           variable == "total_male" | 
-           variable == "fulltime_female" | 
-           variable == "fulltime_male"
-  ) 
-
-##--2d. ACS Data: Filters for Ethnic Population of GRPHL--------------------------------
-
-acs_pop <- acs_metro_dta %>% 
-  filter(variable == "total_white" |
-           variable == "total_black" |
-           variable == "total_native" |
-           variable == "total_asian" |
-           variable == "total_hawaii" |
-           variable == "total_otherrace" |
-           variable == "total_multirace" |
-           variable == "total_hispanic")
-
-# creating race variable for merging
-acs_pop$variable <- sub("total_", "", acs_pop$variable)
-
-# renaming race variable 
-acs_pop <- acs_pop %>% 
-  rename(race = variable)
-
-# calculating proportions for each race 
-acs_pop <- acs_pop %>% 
-  group_by(Year, NAME) %>% 
-  mutate(total_pop = sum(estimate),
-         ethnic_prop = (estimate/sum(estimate, na.rm = TRUE)) * 100)
-
-
-##--2e. ACS Data: Ethnic Employment and Ethnic Population of GRPHL----
-
-# calculating proportions of employees by race in the employee data
-
-temp_dta1 <- acs_race %>% 
-  group_by(Year, NAME) %>% 
-  mutate(emp_prop = (total_estimate/sum(total_estimate, na.rm = TRUE)) * 100) %>% 
-  distinct(emp_prop, .keep_all = TRUE) %>% 
-  select(-c(gender, estimate, total_estimate))
-
-temp_dta2 <- acs_pop %>% 
-  select(-c(estimate, total_pop))
-
-ethnic_merge <- temp_dta1 %>% 
-  inner_join(temp_dta2, by = c("Year", "GEOID", "NAME", "race"))
-
-# calculating over/under representation in construction industry by ethnicity 
-ethnic_merge <- ethnic_merge %>% 
-  group_by(NAME, race) %>% 
-  mutate(avg_employment = mean(emp_prop, na.rm = TRUE),
-         avg_ethnicity = mean(ethnic_prop, na.rm = TRUE)
-  ) %>% 
-  distinct(avg_employment, .keep_all = TRUE) %>% 
-  select(-c(emp_prop, ethnic_prop)) %>% 
-  gather(variable, proportion, avg_employment:avg_ethnicity)
-
-##--2g.1. ACS Data: Ethnic Proportions at County level----------------------------------------------
+##--2a.1. ACS Data: Ethnic Proportions at County level----------------------------------------------
 
 # filtering for just race variables 
 acs_race_employees <- acs_county_dta %>% 
@@ -149,7 +52,7 @@ acs_race_employees <- acs_race_employees %>%
   distinct(emp_prop, .keep_all = TRUE) %>% 
   select(-total_estimate)
 
-##--2g.2. ACS Data: Ethnic Proportions AND Population at County level------------
+##--2a.2. ACS Data: Ethnic Proportions AND Population at County level------------
 
 acs_race_pop <- acs_county_dta %>% 
   filter(variable == "total_white" |
@@ -175,7 +78,7 @@ acs_race_pop <- acs_race_pop %>%
   select(-estimate)
 
 
-##--2g.3. ACS Data: Combining County Ethnic Data and Overall Ethnic Data at County Level-------
+##--2a.3. ACS Data: Combining County Ethnic Data and Overall Ethnic Data at County Level-------
 
 # calculating proportions of employees by race in the employee data
 
@@ -193,7 +96,7 @@ ethnic_merge <- ethnic_merge %>%
   mutate(avg_diff_prop = mean(diff_prop, na.rm = TRUE)) %>% 
   distinct(avg_diff_prop, .keep_all = TRUE)
 
-##--2g.4. ACS Data: Philadelphia vs. Rest of Greater Philadelphia---------------
+##--2a.4. ACS Data: Philadelphia vs. Rest of Greater Philadelphia---------------
 
 # filtering counties in Greater Philadelphia excluding Philadelphia 
 philly_prime <- ethnic_merge %>% 
@@ -221,7 +124,7 @@ region_employment <- rbind(philly, philly_prime)
 region_employment <- region_employment %>% 
   mutate(race = paste0(toupper(substr(race, 1, 1)), substr(race, 2, nchar(race))))
 
-##--2g.5. ACS Data: Barplot Plot of Representation at County Level----
+##--2a.5. ACS Data: Barplot Plot of Representation at County Level----
 
 region_employment %>%
   filter(race != "Otherrace") %>% 
@@ -261,4 +164,70 @@ region_employment %>%
 
 
 
-##--2
+##--2b.1. ACS Data: Gender Proportions at County level---------------------------------
+
+acs_gender_employees <- acs_county_dta %>% 
+  filter(variable == "total_male" | variable == "total_female") %>% 
+  group_by(Year, GEOID) %>% 
+  mutate(gender_prop = estimate/sum(estimate, na.rm = TRUE)) # proportion of construction workers by gender 
+
+
+acs_gender_employees <- acs_gender_employees %>% 
+  group_by(GEOID, variable) %>% 
+  mutate(avg_gender_prop = mean(gender_prop, na.rm = TRUE)) %>% 
+  distinct(avg_gender_prop, .keep_all = TRUE)
+
+##--2b.2. ACS Data: Gender Proportions in philadelphia and rest of GRPHL---------------------------------
+
+acs_philly <- acs_gender_employees %>% 
+  filter(NAME == "Philadelphia County, Pennsylvania")
+
+acs_phillyprime <- acs_gender_employees %>% 
+  filter(NAME == "Montgomery County, Pennsylvania" | 
+           NAME == "Bucks County, Pennsylvania" |
+           NAME == "Chester County, Pennsylvania" |
+           NAME == "Delaware County, Pennsylvania" |
+           NAME == "Burlington County, New Jersey" |
+           NAME == "Camden County, New Jersey" |
+           NAME == "Gloucester County, New Jersey" |
+           NAME == "New Castle County, Delaware" |
+           NAME == "Cecil County, Maryland" | 
+           NAME == "Salem County, New Jersey") %>% 
+  group_by(variable) %>% 
+  mutate(avg_gender_grphl = mean(avg_gender_prop, na.rm = TRUE))
+
+##--2b.3. ACS Data: Waffle Plot of Gender Proportions---------------------------------
+
+# Create a named vector of data
+gender_philly <- c(`% Females`=4, `% Males`= 96)
+gender_phillyprime <- c(`% Females`=2, `% Males`= 98)
+
+# Create a waffle plot
+gr1 <- waffle(gender_philly, rows=10,
+               colors = c("#FF4900", "#1097FF"),
+               legend_pos = "bottom") + 
+       labs(title = "Philadelphia",
+            caption = "Source: American Community Survey") + 
+       theme(
+            text = element_text(family = "Georgia", color = "darkslategrey"),
+            plot.title = element_text(size = 12, hjust = 0),
+            plot.caption = element_text(size = 8, hjust = 0, color = "grey50"))
+
+gr2 <- waffle(gender_phillyprime, rows=10,
+            colors = c("#FF4900", "#1097FF"),
+            legend_pos = "bottom") + 
+        labs(title = "Rest of Greater Philadelphia") +
+        theme(
+            text = element_text(family = "Georgia", color = "darkslategrey"),
+            plot.title = element_text(size = 12, hjust = 0),
+            plot.caption = element_text(size = 8, hjust = 0, color = "grey50"))
+
+gr1 + gr2 + 
+  plot_annotation(title = "Proportion of Employees in Construction Sector (%) by Gender",
+                  subtitle = "This graph shows the number of people employed in the Construction sector by proportion \nacross male and female employees. Each box represents one percentage of the entire \nconstruction industry in each region and the estimates are 16-year average of employee \nproportions by gender.",
+                  theme = theme(plot.title = element_text(size = 14, color = "darkslategrey", family = "Georgia"),
+                                plot.subtitle = element_text(size = 10, color = "grey40", family = "Georgia"))) +
+  plot_layout(guides = "collect") & theme(legend.position = "bottom", legend.direction = "horizontal")
+  
+
+
