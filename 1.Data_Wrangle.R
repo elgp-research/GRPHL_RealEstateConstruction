@@ -352,33 +352,75 @@ ipums_data <- ipums_data %>%
        ))
 
 
-ipums_philly <- ipums_data %>% 
+ipums_phillymetro <- ipums_data %>% 
   filter(MET2013 == 37980) # filtering for just Philadelphia metro
+
+ipums_philly <- ipums_data %>% 
+  filter(STATEFIP == 42 & COUNTYFIP == 101) # filtering for just Philadelphia county
+
+ipums_phillyprime <- ipums_data %>% 
+  filter((STATEFIP == 42 & COUNTYFIP == 91) | # montgomery, pa
+           (STATEFIP == 42 & COUNTYFIP == 17) | # buck, pa
+            (STATEFIP == 42 & COUNTYFIP == 29) | # chester, pa
+              (STATEFIP == 42 & COUNTYFIP == 45) | # delaware, pa
+                 (STATEFIP == 34 & COUNTYFIP == 5) | # burlington, nj
+                    (STATEFIP == 34 & COUNTYFIP == 7) | # camden, nj
+                       (STATEFIP == 34 & COUNTYFIP == 15) | # gloucester, nj
+                          (STATEFIP == 34 & COUNTYFIP == 33) | # salem, nj
+                             (STATEFIP == 10 & COUNTYFIP == 3) | # new castle, de
+                                (STATEFIP == 24 & COUNTYFIP == 15) # cecil, md
+         )
 
 
 ##--3c. IPUMS Survey weights--------------------------------------------------------------------------
-dtaDesign     <- svydesign(id      = ~CLUSTER,
+dtaDesign_philly <- svydesign(id   = ~CLUSTER,
                            strata  = ~STRATA,
                            weights = ~PERWT,
                            nest    = TRUE,
                            data    = ipums_philly)
 
-##--3d. IPUMS Cross tabulations: RACE -------------------------------------------------------
-occ_table <- svytable(~YEAR+RACE+HISPAN+IND+CLASSWKR, design = dtaDesign)
+dtaDesign_phillyprime <- svydesign(id = ~CLUSTER,
+                                   strata  = ~STRATA,
+                                   weights = ~PERWT,
+                                   nest    = TRUE,
+                                   data    = ipums_phillyprime)
+
+##--3d. IPUMS Cross tabulations - Philadelphia and GRPHL: RACE -------------------------------------------------------
+
+# JUST PHILADELPHIA 
+occ_table <- svytable(~YEAR+RACE+HISPAN+IND+CLASSWKR, design = dtaDesign_philly)
 occ_data <- as.data.frame(occ_table)
 
-ipums_construction <- occ_data %>% 
-  filter(IND == 770 | IND == 3080) %>% # filtering for construction industry 
-  mutate(RACE_adj = ifelse((RACE == "White" & HISPAN == "Not Hispanic"), "White", 
-                           ifelse((RACE == "Black/African American" & HISPAN == "Not Hispanic"), "Black/African American",
-                                  ifelse((RACE == "Other Asian or Pacific Islander" & HISPAN == "Not Hispanic"), "Other Asian or Pacific Islander",
-                                         ifelse((RACE == "Other race, nec" & HISPAN == "Not Hispanic"), "Other race, nec",
-                                                ifelse((RACE == "Two major races" & HISPAN == "Not Hispanic"), "Two major races",
-                                                       ifelse((RACE == "American Indian or Alaska Native" & HISPAN == "Not Hispanic"), "American Indian or Alaska Native",
-                                                              ifelse((RACE == "Chinese" & HISPAN == "Not Hispanic"), "Chinese",
-                                                                     ifelse((RACE == "Japanese" & HISPAN == "Not Hispanic"), "Japanese",
-                                                                            ifelse((RACE == "Three or more major races" & HISPAN == "Not Hispanic"), "Three or more major races", "Hispanic")))))))))) %>% 
-  filter(HISPAN != "Not Reported")
+ipums_clean <- function(filename) {
+  dat <- filename
+  
+  dat <- dat %>% 
+    filter(IND == 770 | IND == 3080) %>% # filtering for construction industry 
+    mutate(RACE_adj = ifelse((RACE == "White" & HISPAN == "Not Hispanic"), "White", 
+                             ifelse((RACE == "Black/African American" & HISPAN == "Not Hispanic"), "Black/African American",
+                                    ifelse((RACE == "Other Asian or Pacific Islander" & HISPAN == "Not Hispanic"), "Other Asian or Pacific Islander",
+                                           ifelse((RACE == "Other race, nec" & HISPAN == "Not Hispanic"), "Other race, nec",
+                                                  ifelse((RACE == "Two major races" & HISPAN == "Not Hispanic"), "Two major races",
+                                                         ifelse((RACE == "American Indian or Alaska Native" & HISPAN == "Not Hispanic"), "American Indian or Alaska Native",
+                                                                ifelse((RACE == "Chinese" & HISPAN == "Not Hispanic"), "Chinese",
+                                                                       ifelse((RACE == "Japanese" & HISPAN == "Not Hispanic"), "Japanese",
+                                                                              ifelse((RACE == "Three or more major races" & HISPAN == "Not Hispanic"), "Three or more major races", "Hispanic")))))))))) %>% 
+    filter(HISPAN != "Not Reported")
+}
+
+ipums_construction_philly <- ipums_clean(occ_data) 
+ipums_construction_philly$region <- "Philadelphia"
+
+# GRPHL WITHOUT PHILADELPHIA 
+occ_table <- svytable(~YEAR+RACE+HISPAN+IND+CLASSWKR, design = dtaDesign_phillyprime)
+occ_data <- as.data.frame(occ_table)
+
+ipums_construction_phillyprime <- ipums_clean(occ_data)
+ipums_construction_phillyprime$region <- "Rest of Greater Philadelphia"
+
+# MERGING IPUMS DATASETS TOGETHER 
+ipums_construction <- rbind(ipums_construction_philly, ipums_construction_phillyprime)
+
   
 ##--3e. IPUMS Cross tabulations: AGE -------------------------------------------------------
 
