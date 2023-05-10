@@ -127,11 +127,11 @@ region_employment <- region_employment %>%
 ##--2a.5. ACS Data: Barplot Plot of Representation at County Level----
 
 region_employment %>%
-  filter(race != "Otherrace") %>% 
+  filter(race != "Otherrace" & race != "Hawaii") %>% 
   ggplot(aes(x=reorder(race, region_emp_prop),  y=region_emp_prop, fill = region)) +
   geom_col(position = "dodge", width = 0.7) +
   scale_fill_manual(values = c("#FF4900", "#1097FF")) +
-  labs(x = "", y = "Difference (% points)",
+  labs(x = "", y = "Employment Proportion - Population Proportion \n(% points)",
        title = "Proportional Representation in Construction Sector \nin Greater Philadelphia (2010 - 2021)",
        subtitle = "This graph shows the representation of employees in the Construction sector by race and ethnicity. \nPositive numbers mean the ethnicity is over-represented in the construction sector compared to \ntheir population proportion in the same region. Negative numbers mean vice versa. The bars are \nalso separated by Philadelphia and rest of Greater Philadelphia excluding Philadelphia.",
        caption = "Source: American Community Survey") +
@@ -150,18 +150,11 @@ region_employment %>%
         strip.text = element_text(color = "black"),
         plot.title = element_text(size = 15, margin = margin(b = 10, t = 5), color = "darkslategrey", hjust = 0),
         plot.subtitle = element_text(size = 10, color = "grey40", margin = margin(b = 10)),
-        plot.caption = element_text(size = 8, margin = margin(t = 10), color = "grey50", hjust = 0),
-        axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 10), color = "darkslategrey", ),
+        plot.caption = element_text(size = 10, margin = margin(t = 10), color = "grey50", hjust = 0),
+        axis.title.y = element_text(size = 10, margin = margin(t = 0, r = 10, b = 0, l = 10), color = "darkslategrey", ),
         axis.title.x = element_text(margin = margin(t = 10, r = 10, b = 0, l = 10), color = "darkslategrey", ),
         axis.ticks.x = element_blank(),
         plot.margin = margin(0.2,0.2,0.2,0.2, "cm"))
-
-
-
-
-
-
-
 
 
 ##--2b.1. ACS Data: Gender Proportions at County level---------------------------------
