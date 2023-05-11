@@ -9,7 +9,19 @@ library(sfheaders)
 ##--sourcing R file-------------------------------------------------------------------
 source("1.Data_Wrangle.R")
 
-##--4a. OES Data: Construction Wage Trends----------------------------------------
+##--4a. OES Data: Identifying Construction Occupations----------------------------------------
+
+# Occupation titles 
+occupation_titles <- oes_philly$OCC_TITLE
+
+# Define regular expressions to match Construction sector occupation titles
+construction_regex <- "(?i)(Architect|Building Contractor|Building Inspector|Building Maintenance Technician|Building Surveyor|Carpenter|Concrete Finisher|Construction Equipment Operator|Construction Laborer|Construction Manager|Construction Project Manager|Construction Superintendent|Crane Operator|Drywaller|Electrician|Environmental Engineer|Estimator|Fire Sprinkler Installer|Flooring Installer|General Contractor|Glazier|Heavy Equipment Operator|HVAC Technician|Interior Designer|Ironworker|Landscape Architect|Landscaper|Mason|Painter|Pipefitter|Plumber|Project Engineer|Real Estate Agent|Roofing Contractor|Roofer|Scaffolder|Sheet Metal Worker|Structural Engineer|Surveyor|Tiler|Welder)"
+
+# Use grep function to extract occupation titles that match the Construction sector regex
+construction_occupations <- unique(grep(construction_regex, occupation_titles, value = TRUE))
+
+##--4b. OES Data: Creating Dummy for Construction Jobs------------------------------------------
+
 
 # filtering for "Manufacturing" and "All Occupations" 
 oes_graph <- oes_philly %>% 
