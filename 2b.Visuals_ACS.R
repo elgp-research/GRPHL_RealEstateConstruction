@@ -130,7 +130,7 @@ region_employment %>%
   filter(race != "Otherrace" & race != "Hawaii") %>% 
   ggplot(aes(x=reorder(race, region_emp_prop),  y=region_emp_prop, fill = region)) +
   geom_col(position = "dodge", width = 0.7) +
-  scale_fill_manual(values = c("#FF4900", "#1097FF")) +
+  scale_fill_manual(values = c("#3E92CC", "#D8315B")) +
   labs(x = "", y = "Employment Proportion - Population Proportion \n(% points)",
        title = "Proportional Representation in Construction Sector \nin Greater Philadelphia (2010 - 2021)",
        subtitle = "This graph shows the representation of employees in the Construction sector by race and ethnicity. \nPositive numbers mean the ethnicity is over-represented in the construction sector compared to \ntheir population proportion in the same region. Negative numbers mean vice versa. The bars are \nalso separated by Philadelphia and rest of Greater Philadelphia excluding Philadelphia.",
@@ -197,7 +197,7 @@ gender_phillyprime <- c(`% Females`=2, `% Males`= 98)
 
 # Create a waffle plot
 gr1 <- waffle(gender_philly, rows=10,
-               colors = c("#FF4900", "#1097FF"),
+               colors = c("#D8315B", "#3E92CC"),
                legend_pos = "bottom") + 
        labs(title = "Philadelphia",
             caption = "Source: American Community Survey") + 
@@ -207,7 +207,7 @@ gr1 <- waffle(gender_philly, rows=10,
             plot.caption = element_text(size = 8, hjust = 0, color = "grey50"))
 
 gr2 <- waffle(gender_phillyprime, rows=10,
-            colors = c("#FF4900", "#1097FF"),
+            colors = c("#D8315B", "#3E92CC"),
             legend_pos = "bottom") + 
         labs(title = "Rest of Greater Philadelphia") +
         theme(
