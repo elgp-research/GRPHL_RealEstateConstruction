@@ -567,16 +567,7 @@ acs_county_dta <- map_dfr(
 ##--5a. OES data import-------------------------------------------------------------
 
 # Extract combined OES file from the zip archive to a temporary directory
-zip_file <- "Data/oes1221_allmetrosoccs_20220425.csv.zip"
-temp_dir <- tempfile()
-unzip(zip_file, exdir = temp_dir)
-
-# Read the CSV file into a data frame
-csv_file <- file.path(temp_dir, "oes1221_allmetrosoccs_20220425.csv")
-oes_data <- read.csv(csv_file)
-
-# Clean up the temporary directory
-unlink(temp_dir, recursive = TRUE)
+oes_data <- read_csv("Data/oes1221_allmetrosoccs_20220425.csv.zip", show_col_types = FALSE)
 
 # Adding OES 2022 data
 oes_2022 <- read_excel("Data/MSA_M2022_dl.xlsx")
@@ -593,7 +584,7 @@ oes_master <- rbind(oes_data[,common_cols], oes_2022[,common_cols])
 
 ##--5b. OES data inflation adjustment-------------------------------------------
 
-# Read the CPI data into R 
+# Read the CPI data 
 cpi_data <- read_excel("Data/cpi_data.xlsx")
 cpi_data <- cpi_data[-c(1,2,3,4,5,6,7,8,9,10),]
 names(cpi_data) <- cpi_data[1,]
