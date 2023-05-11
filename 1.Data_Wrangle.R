@@ -449,17 +449,27 @@ ipums_age <- occ_data %>%
 
 ##--3f. IPUMS Cross tabulations: GENDER -------------------------------------------------------
 
-# Identifying distribution of construction employers by gender 
-occ_table <- svytable(~YEAR+SEX+IND+CLASSWKR, design = dtaDesign)
+# JUST PHILADELPHIA 
+occ_table <- svytable(~YEAR+SEX+IND+CLASSWKR, design = dtaDesign_philly)
 occ_data <- as.data.frame(occ_table)
+ipums_gender_philly <- occ_data %>% 
+  mutate(region = "Philadelphia")
+
+# GRPHL WITHOUT PHILADELPHIA 
+occ_table <- svytable(~YEAR+SEX+IND+CLASSWKR, design = dtaDesign_phillyprime)
+occ_data <- as.data.frame(occ_table)
+ipums_gender_phillyprime <- occ_data %>% 
+  mutate(region = "Rest of Greater Philadelphia")
+
+# MERGING DATASETS
+ipums_gender <- rbind(ipums_gender_philly, ipums_gender_phillyprime)
+
 # creating age brackets 
-ipums_gender <- occ_data %>% 
+ipums_gender <- ipums_gender %>% 
   filter(IND == 770 & # filtering for construction industry employers
          CLASSWKR == "Self-employed") %>% 
-  group_by(YEAR) %>% 
-  mutate(gender_prop = Freq/sum(Freq) * 100) %>% 
-  group_by(SEX) %>% 
-  mutate(avg_gender_prop = mean(gender_prop))
+  group_by(YEAR, region) %>% 
+  mutate(gender_prop = Freq/sum(Freq) * 100) 
 
 ##--4a. ACS data: Setting variable and year list for ACS-----------------------------------------
 varlist19 <- load_variables(year = 2019, dataset = "acs1")
