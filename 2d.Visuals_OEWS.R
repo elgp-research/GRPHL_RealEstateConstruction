@@ -15,12 +15,46 @@ source("1.Data_Wrangle.R")
 occupation_titles <- oes_philly$OCC_TITLE
 
 # Define regular expressions to match Construction sector occupation titles
-construction_regex <- "(?i)(Architect|Building Contractor|Building Inspector|Building Maintenance Technician|Building Surveyor|Carpenter|Concrete Finisher|Construction Equipment Operator|Construction Laborer|Construction Manager|Construction Project Manager|Construction Superintendent|Crane Operator|Drywaller|Electrician|Environmental Engineer|Estimator|Fire Sprinkler Installer|Flooring Installer|General Contractor|Glazier|Heavy Equipment Operator|HVAC Technician|Interior Designer|Ironworker|Landscape Architect|Landscaper|Mason|Painter|Pipefitter|Plumber|Project Engineer|Real Estate Agent|Roofing Contractor|Roofer|Scaffolder|Sheet Metal Worker|Structural Engineer|Surveyor|Tiler|Welder)"
+construction_regex <- "(?i)(Architect|Building Contractor|Building Inspector|Building Maintenance Technician|Building Surveyor|Carpenter|Concrete Finisher|Construction Equipment Operator|Construction Laborer|Construction Manager|Construction Project Manager|Construction Superintendent|Crane Operator|Drywall|Electrician|Environmental Engineer|Estimator|Fire Sprinkler Installer|Floor Installer|General Contractor|Glazier|Heavy Equipment Operator|HVAC Technician|Interior Designer|Ironworker|Landscape Architect|Landscaper|Mason|Painter|Pipefitter|Plumber|Project Engineer|Real Estate Agent|Roofing Contractor|Roofer|Scaffolder|Sheet Metal Worker|Structural Engineer|Surveyor|Tiler|Welder|Boilermakers|Carpet Installers|Elevator|Fence|Floor Layers|Floor Sanders and Finishers|Hazardous Materials Removal Workers|Highway Maintenance Workers|Insulation Workers|Paving, Surfacing, and Tamping Equipment Operators|Paperhangers|Pile Driver Operators|Pipelayers|Rail-Track Laying and Maintenance Equipment Operators|Reinforcing Iron and Rebar Workers|Rock Splitters, Quarry|Septic Tank Servicers and Sewer Pipe Cleaners|Solar Photovoltaic Installers|Structural Iron and Steel Workers|Tapers|Terrazzo Workers and Finishers|Tile and Marble Setters|Tile and Stone Setters)"
 
 # Use grep function to extract occupation titles that match the Construction sector regex
 construction_occupations <- unique(grep(construction_regex, occupation_titles, value = TRUE))
 
-##--4b. OES Data: Creating Dummy for Construction Jobs------------------------------------------
+##--4b. OES Data: Function that creates a dummy variable for matching construction occupations-------------
+
+create_construction_dummy <- function(data, data_var_name, matched_occupations) {
+  # Initialize a vector of zeros for the dummy variable
+  construction_dummy <- rep(0, nrow(data))
+  
+  # Loop through each occupation in construction_occupations
+  for (occupation in construction_occupations) {
+    # Check if the data variable matches the occupation using grepl
+    occupation_matches <- grepl(occupation, data[[data_var_name]])
+    
+    # Set the corresponding element of the dummy variable to 1 if there is a match
+    construction_dummy[occupation_matches] <- 1
+  }
+  
+  # Add the dummy variable to the data dataframe
+  data$construction_dummy <- construction_dummy
+  
+  # Return the modified data dataframe
+  return(data)
+}
+
+# Assume you have the 'data' dataframe and 'construction_occupations' vector defined
+oes_philly_dummy <- create_construction_dummy(oes_philly, "OCC_TITLE", construction_occupations)
+
+oes_philly_dummy <- oes_philly_dummy %>% 
+  select(PRIM_STATE, AREA, OCC_CODE, OCC_TITLE, construction_dummy, year, 
+         H_MEAN_real, H_MEDIAN_real, A_MEAN_real, A_MEDIAN_real)
+
+  
+
+
+
+
+
 
 
 # filtering for "Manufacturing" and "All Occupations" 
