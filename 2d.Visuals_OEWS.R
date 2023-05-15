@@ -49,33 +49,32 @@ oes_philly_dummy <- oes_philly_dummy %>%
   select(PRIM_STATE, AREA, OCC_CODE, OCC_TITLE, construction_dummy, year, 
          H_MEAN_real, H_MEDIAN_real, A_MEAN_real, A_MEDIAN_real)
 
-  
-
-
-
-
-
-
-
-# filtering for "Manufacturing" and "All Occupations" 
-oes_graph <- oes_philly %>% 
-  filter(OCC_CODE == "47-0000" | OCC_CODE == "00-0000") %>% 
-  select(PRIM_STATE, AREA, OCC_CODE, OCC_TITLE, year, H_MEAN_real, H_MEDIAN_real, A_MEAN_real, A_MEDIAN_real) %>% 
-  gather(wage_type, amount, H_MEAN_real:A_MEDIAN_real) %>% 
+##--4c. OES Data: Filters for Construction Wages and Overall Wages------------------
+oes_philly_construction <- oes_philly_dummy %>% 
+  filter(construction_dummy == 1 | OCC_TITLE == "All Occupations") %>% 
+  group_by(year, construction_dummy) %>% 
+  mutate(avg_hwage_mean = mean(H_MEAN_real, na.rm = TRUE),
+         avg_hwage_median = mean(H_MEDIAN_real, na.rm = TRUE),
+         avg_awage_mean = mean(A_MEAN_real, na.rm = TRUE),
+         avg_awage_median = mean(A_MEDIAN_real, na.rm = TRUE)
+  ) %>% 
+  distinct(avg_hwage_mean, .keep_all = TRUE) %>% 
+  gather(wage_type, amount, avg_hwage_mean:avg_awage_median) %>% 
   mutate(year_date = as.Date(paste0(year, "-01-01")),
-         wage_type = ifelse(wage_type == "A_MEAN_real", "Mean Annual Wage",
-                            ifelse(wage_type == "A_MEDIAN_real", "Median Annual Wage",
-                                   ifelse(wage_type == "H_MEAN_real", "Mean Hourly Wage",
-                                          ifelse(wage_type == "H_MEDIAN_real", "Median Hourly Wage", wage_type))))
+         wage_type = ifelse(wage_type == "avg_awage_mean", "Mean Annual Wage",
+                            ifelse(wage_type == "avg_awage_median", "Median Annual Wage",
+                                   ifelse(wage_type == "avg_hwage_mean", "Mean Hourly Wage",
+                                          ifelse(wage_type == "avg_hwage_median", "Median Hourly Wage", wage_type))))
   ) 
 
-# ggplot of wages
-oes_graph %>% 
-  ggplot(aes(x=year_date, y = amount, color = OCC_TITLE)) + 
-  geom_line(aes(linetype = OCC_TITLE, group = OCC_TITLE)) +  
+##--4d. OES Data: Line Plots of Wages--------------------------------------------
+
+oes_philly_construction %>% 
+  mutate(construction_dummy = ifelse(construction_dummy == 1, "Construction Sector", "All Occupations")) %>% 
+  ggplot(aes(x=year_date, y = amount, color = as.factor(construction_dummy))) + 
+  geom_line() +  
   facet_wrap(~wage_type, scale = "free_y") + 
-  scale_linetype_manual(values = c("dashed", "solid")) + 
-  scale_color_manual(values = c("#1097FF", "#FF4900")) +
+  scale_color_manual(values = c("#FB3640", "#0A2463")) +
   scale_y_continuous(labels = function(x) paste0("$", x)) + 
   labs(y = "Wages", x = "", 
        title = "Wages in Greater Philadelphia for the Construction Sector",
@@ -93,7 +92,7 @@ oes_graph %>%
         legend.text = element_text(),
         text = element_text(family = "Georgia"),
         strip.text = element_text(color = "black"),
-        plot.title = element_text(size = 15, margin = margin(b = 10, t = 5), color = "darkslategrey", hjust = 0.5),
+        plot.title = element_text(size = 15, margin = margin(b = 10, t = 5), color = "darkslategrey", hjust = 0),
         plot.subtitle = element_text(size = 10, color = "grey40", margin = margin(b = 10)),
         plot.caption = element_text(size = 8, margin = margin(t = 10), color = "grey50", hjust = 0),
         axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 10), color = "darkslategrey", ),
