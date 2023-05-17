@@ -118,7 +118,7 @@ oes_barplot %>%
   ggplot(aes(x=as.factor(construction_dummy), y=average_amount, fill = as.factor(construction_dummy))) +
   geom_col(width = 0.7) +
   facet_wrap(~wage_type, scale = "free_y") + 
-  scale_fill_manual(values = c("#FB3640", "#0A2463")) +
+  scale_fill_manual(values = c("#0A2463", "#FB3640")) +
   scale_y_continuous(labels = function(x) paste0("$", x)) + 
   labs(y = "Wages", x = "", 
        title = "Median Wages in Greater Philadelphia for the Construction Sector (2012 - 2022)",
