@@ -1,3 +1,29 @@
-# Overview
-This project maps out the construction landscape of Greater Philadelphia as part of the collaboration with the PAGE team at the Economy League of Greater Philadelphia.
-Test change
+# Landscape of Construction Sector in Greater Philadelphia 
+
+This project maps out the construction landscape of Greater Philadelphia as part of the collaboration between the PAGE team and Research team at the Economy League of Greater Philadelphia. 
+
+## Project Description 
+
+Federal government's response to the COVID-19 pandemic and the focus of the Biden-Haris administeration on revitalizing infrastructure across cities in the U.S. means that that local governments have unprecedented availability of funds to improve and create new infrastructure projects in their communities. 
+
+This project aims to understand the current and historical landscape of the construction sector in Greater Philadelphia in terms of the gaps in diversity, inclusion and equity (DEI) in this sector. We lay out the size of the construction sector by employment and the number of employers by ethnicity in construction in Greater Philadelphia. By identifying the gaps in employment and minority-owned businesses who are engaged in real estate and construction industry, we aim to highlight how federal funding can be used to fill these gaps in Greater Philadelphia. 
+
+We hope to present these results at the Real Estate and Construction event hosted by PAGE in August 2023 to an construction experts, employers and policy makers. 
+
+## Install and Run the Project 
+
+We conducted our analysis using the following publicly available datasets: 
+
+- [American Community Survey (ACS)](https://www.census.gov/programs-surveys/acs/): Construction Sector Size and Employment Demographics
+- [Integrated Public Use Micrdata Series USA (IPUMS)](https://usa.ipums.org/usa/): Construction Employer Demographics
+- [Current Employment Statistics (CES)](https://www.bls.gov/data/): Overal Employment Trends in Construction Sector
+- [Quarterly Census of Empployment and Wages (QCEW)](https://www.bls.gov/data/): Wages in Construction Sector
+- [Consumer Price Index - Urban (CPI)](https://www.bls.gov/data/): CPI index to adjust wages for inflation 
+- [Federal Awards Data Archive](https://www.usaspending.gov/download_center/award_data_archive): Data on all federal awards and grants for FY 2023
+
+
+
+In order to run this project on your local repository, please follow these steps: 
+
+1. `1.Data_Wrangle.R`: This R file contains the code for importing all datasets from publicly available websites and wrangling them for visualization
+2. 
