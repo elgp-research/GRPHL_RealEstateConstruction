@@ -29,8 +29,6 @@ In order to run this project on your local repository, please follow these steps
 
 2. `2a.Visuals_CES.R`: This file visualizes the overall employment trends and size of the construction sector in Greater Philadelphia from 1990 - 2023. 
 
-[Alt text](Figures/employment_line.png)
-
 3. `2b.Visuals_ACS.R`: Visualizations of the employment trends in the construction sector by gender and ethnicity.
 
 4. `2c.Visuals_IPUMS.R`: Visualization of employer trends in the construction sector by gender and ethnicity. 
