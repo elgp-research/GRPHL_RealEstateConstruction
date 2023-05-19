@@ -49,7 +49,7 @@ The entire data collection, analysis and visualization in this repository was do
 
 MIT License
 
-Copyright (c) [year] [fullname]
+Copyright (c) 2023 Economy League of Greater Philadelphia
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
