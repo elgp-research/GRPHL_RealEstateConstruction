@@ -27,7 +27,7 @@ In order to run this project on your local repository, please follow these steps
 
 1. `1.Data_Wrangle.R`: This R file contains the code for importing all datasets from publicly available websites and wrangling them for visualization. All datasets are in the folder `Data`, except for the data extract from IPUMS. The IPUMS data is too large to be directly uploaded to Github. In order to create the same data extract from IPUMS, please run the `read_ipums_ddi("Data/usa_00024.xml")` code using the `ipumsr` package in R. Running `1.Data_Wrangle.R` file will take some time because the large nature of the datasets. After creating your own IPUMS data extract, you should be able to run the entire file in one go without errors. On the other hand, you can run the individual sections of the code as well. 
 
-[Alt text](https://rpubs.com/haseebbajwa/1040172)
+![Alt text](https://rpubs.com/haseebbajwa/1040172)
 
 
 2. `2.Visuals.R`: This file visualizes the overall employment trends and size of the construction sector in Greater Philadelphia from 1990 - 2023. 
