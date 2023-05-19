@@ -424,28 +424,28 @@ ipums_construction <- rbind(ipums_construction_philly, ipums_construction_philly
   
 ##--3e. IPUMS Cross tabulations: AGE -------------------------------------------------------
 
-# Identifying distribution of construction employers by age 
-occ_table <- svytable(~YEAR+AGE+IND+CLASSWKR, design = dtaDesign)
-occ_data <- as.data.frame(occ_table)
-
-# creating age brackets 
-ipums_age <- occ_data %>% 
-  mutate(AGE = as.numeric(AGE),
-    age_bracket = ifelse(AGE < 20, "Less than 20 years", 
-                              ifelse((AGE >= 20 & AGE < 40), "20-39",
-                                     ifelse((AGE >=40 & AGE < 60), "40-59",
-                                            ifelse((AGE >= 60 & AGE < 80), "60-79",
-                                                    ifelse(AGE >= 80, "80-100", AGE
-                                     )))))) %>% 
-  filter(IND == 770 & # filtering for construction industry employers
-         CLASSWKR == "Self-employed") %>% 
-  group_by(YEAR, age_bracket) %>% 
-  mutate(Freq_sum = sum(Freq)) %>% 
-  distinct(Freq_sum, .keep_all = TRUE) %>% 
-  group_by(YEAR) %>% 
-  mutate(age_prop = Freq_sum/sum(Freq_sum) * 100)
-
+# # Identifying distribution of construction employers by age 
+# occ_table <- svytable(~YEAR+AGE+IND+CLASSWKR, design = dtaDesign)
+# occ_data <- as.data.frame(occ_table)
 # 
+# # creating age brackets 
+# ipums_age <- occ_data %>% 
+#   mutate(AGE = as.numeric(AGE),
+#     age_bracket = ifelse(AGE < 20, "Less than 20 years", 
+#                               ifelse((AGE >= 20 & AGE < 40), "20-39",
+#                                      ifelse((AGE >=40 & AGE < 60), "40-59",
+#                                             ifelse((AGE >= 60 & AGE < 80), "60-79",
+#                                                     ifelse(AGE >= 80, "80-100", AGE
+#                                      )))))) %>% 
+#   filter(IND == 770 & # filtering for construction industry employers
+#          CLASSWKR == "Self-employed") %>% 
+#   group_by(YEAR, age_bracket) %>% 
+#   mutate(Freq_sum = sum(Freq)) %>% 
+#   distinct(Freq_sum, .keep_all = TRUE) %>% 
+#   group_by(YEAR) %>% 
+#   mutate(age_prop = Freq_sum/sum(Freq_sum) * 100)
+# 
+# # 
 
 ##--3f. IPUMS Cross tabulations: GENDER -------------------------------------------------------
 
