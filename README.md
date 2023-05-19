@@ -4,7 +4,7 @@ This project maps out the construction landscape of Greater Philadelphia as part
 
 ## Project Description 
 
-Federal government's response to the COVID-19 pandemic and the focus of the Biden-Haris administeration on revitalizing infrastructure across cities in the U.S. means that that local governments have unprecedented availability of funds to improve and create new infrastructure projects in their communities. 
+Federal government's response to the COVID-19 pandemic and the focus of the Biden-Harris administeration on revitalizing infrastructure across cities in the U.S. means that that local governments have unprecedented availability of funds to improve and create new infrastructure projects in their communities. 
 
 This project aims to understand the current and historical landscape of the construction sector in Greater Philadelphia in terms of the gaps in diversity, inclusion and equity (DEI) in this sector. We lay out the size of the construction sector by employment and the number of employers by ethnicity in construction in Greater Philadelphia. By identifying the gaps in employment and minority-owned businesses who are engaged in real estate and construction industry, we aim to highlight how federal funding can be used to fill these gaps in Greater Philadelphia. 
 
