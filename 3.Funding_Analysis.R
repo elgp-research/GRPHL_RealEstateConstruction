@@ -41,13 +41,13 @@ read_and_clean_data <- function(folder_path) {
       ) 
     
     ##--filtering for infrastructure related government departments----
-    df <- df %>% 
-      filter(awarding_agency_name == "Department of Transportation" |
-               awarding_agency_name == "Department of Energy" |
-               awarding_agency_name == "Department of Housing and Urban Development" |
-               awarding_agency_name == "Department of Defense" |
-               awarding_agency_name == "Environmental Protection Agency" 
-      )
+    # df <- df %>% 
+    #   filter(awarding_agency_name == "Department of Transportation" |
+    #            awarding_agency_name == "Department of Energy" |
+    #            awarding_agency_name == "Department of Housing and Urban Development" |
+    #            awarding_agency_name == "Department of Defense" |
+    #            awarding_agency_name == "Environmental Protection Agency" 
+    #   )
     
     ##--filtering relevant variables----
     # df <- df %>% 
@@ -104,19 +104,19 @@ for (i in 1:3) {
 }
 
 # creating dataset for businesses by ethnicity 
-df_grphl_eth <- df_grphl %>% 
-  select(contract_transaction_unique_key, contract_award_unique_key,
-         award_id_piid, modification_number, parent_award_agency_id, 
-         federal_action_obligation, total_dollars_obligated, 
-         period_of_performance_start_date, period_of_performance_current_end_date,
-         region, awarding_agency_name, recipient_name, recipient_address_line_1, recipient_city_name,
-         alaskan_native_corporation_owned_firm, american_indian_owned_business, 
-         tribally_owned_firm, minority_owned_business, asian_pacific_american_owned_business, 
-         black_american_owned_business, hispanic_american_owned_business)
+# df_grphl_eth <- df_grphl %>% 
+#   select(contract_transaction_unique_key, contract_award_unique_key,
+#          award_id_piid, modification_number, parent_award_agency_id, 
+#          federal_action_obligation, total_dollars_obligated, 
+#          period_of_performance_start_date, period_of_performance_current_end_date,
+#          region, awarding_agency_name, recipient_name, recipient_address_line_1, recipient_city_name,
+#          alaskan_native_corporation_owned_firm, american_indian_owned_business, 
+#          tribally_owned_firm, minority_owned_business, asian_pacific_american_owned_business, 
+#          black_american_owned_business, hispanic_american_owned_business)
 
 # reshaping data to long to create ethnicity variable 
-df_grphl_eth <- df_grphl_eth %>% 
-  gather(ethnicity, indicator, alaskan_native_corporation_owned_firm:hispanic_american_owned_business)
+# df_grphl_eth <- df_grphl_eth %>% 
+#   gather(ethnicity, indicator, alaskan_native_corporation_owned_firm:hispanic_american_owned_business)
 
 
 #--saving data set----
