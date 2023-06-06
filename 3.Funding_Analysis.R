@@ -103,5 +103,22 @@ for (i in 1:3) {
   df_grphl <- rbind(df_grphl, df)
 }
 
+# creating dataset for businesses by ethnicity 
+df_grphl_eth <- df_grphl %>% 
+  select(contract_transaction_unique_key, contract_award_unique_key,
+         award_id_piid, modification_number, parent_award_agency_id, 
+         federal_action_obligation, total_dollars_obligated, 
+         period_of_performance_start_date, period_of_performance_current_end_date,
+         awarding_agency_name, recipient_name, recipient_address_line_1, recipient_city_name,
+         alaskan_native_corporation_owned_firm, american_indian_owned_business, 
+         tribally_owned_firm, minority_owned_business, asian_pacific_american_owned_business, 
+         black_american_owned_business, hispanic_american_owned_business)
+
+# reshaping data to long to create ethnicity variable 
+df_grphl_eth <- df_grphl_eth %>% 
+  gather(ethnicity, indicator, alaskan_native_corporation_owned_firm:hispanic_american_owned_business)
+
+
 #--saving data set----
 write.csv(df_grphl, "Data/clean_fed_funds_contracts.csv")
+write.csv(df_grphl_eth, "Data/clean_fed_funds_contracts_ethnicity.csv")
