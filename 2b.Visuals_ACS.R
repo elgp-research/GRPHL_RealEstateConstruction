@@ -128,12 +128,17 @@ region_employment <- region_employment %>%
 
 region_employment %>%
   filter(race != "Otherrace" & race != "Hawaii") %>% 
+  mutate(race = ifelse(race == "Multirace", "Multi-racial",
+                       ifelse(race == "Hispanic", "Latino/Hispanic", race))) %>% 
+  mutate(region = ifelse(region == "Philadelphia", "City of Philadelphia",
+                         ifelse(region == "Rest of Greater Philadelphia", "Suburban Counties", region))) %>% 
   ggplot(aes(x=reorder(race, region_emp_prop),  y=region_emp_prop, fill = region)) +
   geom_col(position = "dodge", width = 0.7) +
+  geom_hline(yintercept = 0, color = "grey50", linetype = "dotted") +
   scale_fill_manual(values = c("#3E92CC", "#D8315B")) +
-  labs(x = "", y = "Employment Proportion - Population Proportion \n(% points)",
-       title = "Proportional Representation in Construction Sector \nin Greater Philadelphia (2010 - 2021)",
-       subtitle = "This graph shows the representation of employees in the Construction sector by race and ethnicity. \nPositive numbers mean the ethnicity is over-represented in the construction sector compared to \ntheir population proportion in the same region. Negative numbers mean vice versa. The bars are \nalso separated by Philadelphia and rest of Greater Philadelphia excluding Philadelphia.",
+  labs(x = "", y = "Degree of Representation (%)",
+       title = "Employment Representation in Greater Philadelphia's Construction Sector",
+       subtitle = "This graph shows the representation of employees in Greater Philadelphia's construction sector \nby race and ethnicity. Positive numbers mean a group is over-represented in the sector when \ncompared to their residential population distribution while negative numbers indicate under \n-representation. Blue bars represent the City of Philadelphia while red bars represent the \nsurrounding ten suburban counties and excludes the City of Philadelphia.",
        caption = "Source: American Community Survey") +
   theme_minimal() + 
   theme(axis.title = element_blank(),
