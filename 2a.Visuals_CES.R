@@ -10,29 +10,28 @@ source("1.Data_Wrangle.R")
 
 ces_growth %>% 
   mutate(Year = as.numeric(Year)) %>% 
-  ggplot(aes(x=Year, y = indx_growth, color = construction_indicator)) + 
-  geom_rect(xmin = 1990, xmax = 1991, ymin = 0.78, ymax = 1.2, color = 'grey90', fill = 'grey90', 
-            alpha = 0.2) +
-  geom_rect(xmin = 2001, xmax = 2002, ymin = 0.78, ymax = 1.2, color = 'grey90', fill = 'grey90', 
-            alpha = 0.2) +
-  geom_rect(xmin = 2007, xmax = 2009, ymin = 0.78, ymax = 1.2, color = 'grey90', fill = 'grey90', 
-            alpha = 0.2) +
+  ggplot(aes(x=Year, y = prop_employment)) + 
+  # geom_rect(xmin = 1990, xmax = 1991, ymin = 0.78, ymax = 1.2, color = 'grey90', fill = 'grey90', 
+  #           alpha = 0.2) +
+  # geom_rect(xmin = 2001, xmax = 2002, ymin = 0.78, ymax = 1.2, color = 'grey90', fill = 'grey90', 
+  #           alpha = 0.2) +
+  # geom_rect(xmin = 2007, xmax = 2009, ymin = 0.78, ymax = 1.2, color = 'grey90', fill = 'grey90', 
+  #           alpha = 0.2) +
   geom_rect(xmin = 2020, xmax = 2020, ymin = 0.78, ymax = 1.2, color = 'grey90', fill = 'grey90', 
             alpha = 0.2) +
-  geom_line() +
-  geom_hline(yintercept = 1, color = "grey40") + 
-  scale_color_manual(values = c("#1097FF","#FF4900")) +
-  labs(x = "", y = "Indexed Growth",
-    title = "Employment Growth in Greater Philadelphia (1990-2023)",
-    subtitle = "This graph shows the indexed growth of the economy of Greater Philadelphia since 1990 \ncompared with the employment growth in the Construction, Mining and Extraction industry. \nThe shaded regions represent historical recession time periods.",
+  geom_line(color = "#FF4900") +
+  geom_hline(yintercept = 0, color = "grey40") + 
+  labs(x = "", y = "Number of Employees (1000s)",
+    title = "Construction Employment (in thousands) in Greater Philadelphia \nbetween 2010-2023",
+    subtitle = "This graph shows the level of employment in the Construction, Mining and Extraction industy \nin Greater Philadelphia between 2010 and 2023.",
     caption = "Source: Current Employment Statistics") + 
   # geom_vline(xintercept = 2001, color = "grey80", linetype = "dashed") +
   # geom_vline(xintercept = 2008, color = "grey80", linetype = "dashed") +
   # geom_vline(xintercept = 2020, color = "grey80", linetype = "dashed") +
   theme_minimal() + 
   theme(axis.title = element_blank(),
-        panel.grid.major.x = element_blank(),
-        panel.grid.major.y = element_blank(),
+        #panel.grid.major.x = element_blank(),
+        #panel.grid.major.y = element_blank(),
         panel.grid.minor = element_blank(),
         legend.title = element_blank(),
         legend.justification = c(0, 1),
