@@ -24,10 +24,8 @@ read_and_clean_data <- function(folder_path) {
     # Add a year column
     df$year <- year
     
-    # Your cleaning code here
-    
-    ##--filtering for counties in Greater Philadelphia----
-    df <- df %>% 
+    #--filtering for counties in Greater Philadelphia----
+    df <- df %>%
       filter((recipient_county_name == "MONTGOMERY" & recipient_state_name == "PENNSYLVANIA") |
                (recipient_county_name == "BUCKS" & recipient_state_name == "PENNSYLVANIA") |
                (recipient_county_name == "CHESTER" & recipient_state_name == "PENNSYLVANIA") |
@@ -36,32 +34,15 @@ read_and_clean_data <- function(folder_path) {
                (recipient_county_name == "CAMDEN" & recipient_state_name == "NEW JERSEY") |
                (recipient_county_name == "GLOUCESTER" & recipient_state_name == "NEW JERSEY") |
                (recipient_county_name == "NEW CASTLE" & recipient_state_name == "DELAWARE") |
-               (recipient_county_name == "CECIL" & recipient_state_name == "MARYLAND") | 
+               (recipient_county_name == "CECIL" & recipient_state_name == "MARYLAND") |
                (recipient_county_name == "SALEM" & recipient_state_name == "NEW JERSEY") |
                (recipient_county_name == "PHILADELPHIA" & recipient_state_name == "PENNSYLVANIA")
-      ) 
-    
-    ##--filtering for infrastructure related government departments----
-    # df <- df %>% 
-    #   filter(awarding_agency_name == "Department of Transportation" |
-    #            awarding_agency_name == "Department of Energy" |
-    #            awarding_agency_name == "Department of Housing and Urban Development" |
-    #            awarding_agency_name == "Department of Defense" |
-    #            awarding_agency_name == "Environmental Protection Agency" 
-    #   )
-    
-    ##--filtering relevant variables----
-    # df <- df %>% 
-    #   select(recipient_state_name, recipient_county_name, recipient_name, recipient_address_line_1, 
-    #          period_of_performance_start_date, period_of_performance_current_end_date,
-    #          awarding_office_name, funding_office_name, recipient_city_code, awarding_agency_name, federal_action_obligation, 
-    #          total_obligated_amount, cfda_title, assistance_type_description, 
-    #          business_types_description, year)
-    
-    ##--summing ammounts by data filters
-    df <- df %>% 
-      mutate(region = ifelse(recipient_county_name == "PHILADELPHIA", "Philadelphia", "Greater Philadelphia")) 
-    
+      )
+    #
+    #--summing ammounts by data filters
+    df <- df %>%
+      mutate(region = ifelse(recipient_county_name == "PHILADELPHIA", "Philadelphia", "Greater Philadelphia"))
+
     ##--calculating duration of grants 
     df$period_of_performance_start_date <- as.Date(df$period_of_performance_start_date)
     df$period_of_performance_current_end_date <- as.Date(df$period_of_performance_current_end_date)
@@ -72,7 +53,6 @@ read_and_clean_data <- function(folder_path) {
     current_date <- Sys.Date()
     df$months_left <- as.numeric(difftime(df$period_of_performance_current_end_date, current_date, units = "weeks")) 
     
-    
     # Add the cleaned dataframe to the list
     cleaned_data[[i]] <- df
   }
@@ -81,7 +61,7 @@ read_and_clean_data <- function(folder_path) {
 }
 
 ##--Running the function on all the datasets----
-cleaned_data <- read_and_clean_data("Data")
+cleaned_data <- read_and_clean_data("Data/FY2018_All_Contracts_Full_20230608")
 
 ##--Putting dataframe in R's global environment----
 names(cleaned_data) <- paste0("df", seq_along(cleaned_data), "_clean")
@@ -93,7 +73,7 @@ list2env(cleaned_data, envir = .GlobalEnv)
 df_grphl <- data.frame()
 
 # Loop over the names of dataframes
-for (i in 1:3) {
+for (i in 1:7) {
   # Get the name of the current dataframe
   df_name <- paste0("df", i, "_clean")
   
@@ -103,26 +83,6 @@ for (i in 1:3) {
   # Bind the current dataframe to the combined data
   df_grphl <- rbind(df_grphl, df)
 }
-
-# creating dataset for businesses by ethnicity 
-# df_grphl_eth <- df_grphl %>% 
-#   select(contract_transaction_unique_key, contract_award_unique_key,
-#          award_id_piid, modification_number, parent_award_agency_id, 
-#          federal_action_obligation, total_dollars_obligated, 
-#          period_of_performance_start_date, period_of_performance_current_end_date,
-#          region, awarding_agency_name, recipient_name, recipient_address_line_1, recipient_city_name,
-#          alaskan_native_corporation_owned_firm, american_indian_owned_business, 
-#          tribally_owned_firm, minority_owned_business, asian_pacific_american_owned_business, 
-#          black_american_owned_business, hispanic_american_owned_business)
-
-# reshaping data to long to create ethnicity variable 
-# df_grphl_eth <- df_grphl_eth %>% 
-#   gather(ethnicity, indicator, alaskan_native_corporation_owned_firm:hispanic_american_owned_business)
-
-df_temp <- df_grphl %>% 
-  distinct(product_or_service_code_description)
-
-df_grphl <- read.csv("Data/clean_fed_funds_contracts.csv")
 
 construction_list <- c(
 "ARCHITECT AND ENGINEERING- CONSTRUCTION: CONFERENCE SPACE AND FACILITIES",
@@ -245,11 +205,11 @@ df_grphl <- df_grphl %>%
 
 ##--calculating funding by construction contract and funding agency  
 df_temp1 <- df_grphl %>% 
-  select(awarding_agency_name,  
+  select(recipient_state_code, recipient_county_name,  
          construction_indicator, total_dollars_obligated) %>%
-  group_by(awarding_agency_name, construction_indicator) %>% 
-  mutate(construction_funds_by_agency = sum(total_dollars_obligated)) %>% 
-  distinct(construction_funds_by_agency, .keep_all = TRUE) %>% 
+  group_by(recipient_state_code, recipient_county_name, construction_indicator) %>% 
+  mutate(construction_funds_by_county = sum(total_dollars_obligated)) %>% 
+  distinct(construction_funds_by_county, .keep_all = TRUE) %>% 
   select(-total_dollars_obligated) 
 
 ##-- calculating construction funding to minority businesses by agency
