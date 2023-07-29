@@ -118,12 +118,17 @@ ethnic_merge <- ethnic_merge %>%
 ethnic_merge %>%
   mutate(race = paste0(toupper(substr(race, 1, 1)), substr(race, 2, nchar(race)))) %>% 
   filter(race != "Otherrace" & race != "Native") %>% 
+  mutate(race = ifelse(race == "Multirace", "Multi-racial",
+                       ifelse(race == "Hispanic", "Latino/Hispanic", race))) %>% 
+  mutate(region = ifelse(region == "Philadelphia", "City of Philadelphia",
+                         ifelse(region == "Rest of Greater Philadelphia", "Suburban Counties", region))) %>%
   ggplot(aes(x=reorder(race, avg_diff_prop),  y=avg_diff_prop, fill = region)) +
   geom_col(position = "dodge", width = 0.7) +
+  geom_hline(yintercept = 0, color = "grey50", linetype = "dotted") +
   scale_fill_manual(values = c("#FF8811", "#392F5A")) +
-  labs(x = "", y = "Employer Proportion - Population Proportion \n(% points)",
-       title = "Employer Representation in Construction Sector \nin Greater Philadelphia (2010 - 2021)",
-       subtitle = "This graph shows the representation of employers in the Construction sector by race and ethnicity. \nPositive numbers mean the ethnicity is over-represented in the construction sector compared to \ntheir population proportion in the same region. Negative numbers mean vice versa. The bars are \nalso separated by Philadelphia and rest of Greater Philadelphia excluding Philadelphia.",
+  labs(x = "", y = "Degree of Representation (%)",
+       title = "Employer Representation in Greater Philadelphia's Construction Sector",
+       subtitle = "This graph shows the representation of employers in Greater Philadelphia's construction sector \nby race and ethnicity. Positive numbers mean a group is over-represented in the sector when \ncompared to their residential population distribution while negative numbers indicate under \n-representation. Orange bars represent the City of Philadelphia while black bars represent the \nsurrounding ten suburban counties and excludes the City of Philadelphia.",
        caption = "Source: American Community Survey, IPUMS") +
   theme_minimal() + 
   theme(axis.title = element_blank(),
